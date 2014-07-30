@@ -1,0 +1,64 @@
+##########################################
+# HIT_XML 
+##########################################
+# R script for planing simple irradiations
+# at HIT
+##########################################
+# S. Greilich, S. Stefanowicz
+# DKFZ Heidelberg
+# Nov 2011
+##########################################
+
+This script requires R, preferably the latest version (download at www.r-project.org).
+
+In addition the R extension packages "XML", "digest", "libamtrack", "grid", and "lattice" have to be installed. While the latter two are present in standard installations, install the others by 'install.packages(<package-name>)' from the R console.
+You might have to start R with administrator priviledges in order to do so ('sudo R'). This installation has only be performed once. 
+
+On some Linux systems, you might get an error message 'xml2-config not found' during compilation of the "XML" package. In this case,
+please install the libxml2-dev package. On Windows, "XML" does not compile out-of-the-box, but a precompiled binary version can be found here: http://www.stats.ox.ac.uk/pub/RWin/bin/windows/contrib/2.14/
+
+
+For "libamtrack" to function properly, an installation of the GNU scientific library (GSL) can be necessary. For Linux systems, this is part of most distributions (but may have to be installed), for Mac OS X and Windows binary installers are available (http://ascend4.org/Binary_installer_for_GSL-1.13_on_MinGW).
+
+Make sure that "/path/to/R/bin" is set in your path environment variable (PATH). Otherwise 'Rscript' cannot be found
+when executed from the command line. Linux systems are usually able to execute HIT_XML.R directly when Rscript is 
+present as an interpreter.
+
+The fluence computations algorithm is found in "libHIT_XML.dll/.so" which has to be found in working directory.
+
+Also the scripts with function required by the script have to be found there.
+
+To run the script, execute from the command line (Windows or Linux):
+Rscript HIT_XML.R
+
+Under Linux you can also:
+./HIT_XML.R
+after setting the appropriate flags:
+chmod 755 HIT_XML.R
+
+In case you encounter an error message like 'bad interpreter /usr/bin/Rscript^M' the Unix line-ends (default) have been accidentally
+changed to Windows style. You can fix this by 'dos2unix' for all '.R'-files. 
+
+If run successful, output will be a request and a plan file with a path ready to be copied onto the control
+machine as well as a pdf showing the field shape etc.
+
+For the latter, we recommend a pdf viewer capable of reloading updating files (i.e. evince, not Acrobat reader)
+
+Suggestion for prompt under Windows $P$_$G$S
+
+The fluence to dose conversion uses tabulated stopping power data
+for liquid water from ICRU49/73 reports.
+
+HIT_XML uses the txtplot function from Claus E. Andersen, DTU Risoe.
+
+###############################################################
+ChangeLog
+
+0.4.0: Added dose function, fixed XML creation
+       (xmlNode instead of unrecommended
+        newXMLNode which additionally gave
+        warnings), changed design, added txtplot
+###############################################################
+Please send any bugs, comments, suggestions to
+s.greilich@dkfz.de
+##############################################

@@ -1,0 +1,15 @@
+variable;value
+date;20120406
+name.exp.series;FNTD
+name.exp.run;jmo3920b
+chosen.particle;4
+intensity;10
+energy.value.MeV.u;448
+chosen.idx;2
+chosen.foc.idx;6
+field.size.mm;50
+r.min.mm;25
+fluence.cm2.or.dose.Gy;1e6
+chosen.rifi.idx;1
+resolution.mm;1
+field.shape.idx;1

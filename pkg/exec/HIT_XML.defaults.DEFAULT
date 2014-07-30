@@ -1,0 +1,15 @@
+variable;value
+date;-1
+name.exp.series;TestExp
+name.exp.run;sg99999
+chosen.particle;2
+intensity;10
+energy.value.MeV.u;123
+chosen.idx;2
+chosen.foc.idx;3
+field.size.mm;50
+r.min.mm;10
+fluence.cm2.or.dose.Gy;1e6
+chosen.rifi.idx;2
+resolution.mm;0.5
+field.shape.idx;1

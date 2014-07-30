@@ -1,0 +1,10 @@
+Package: HITXML
+Type: Package
+Title: XML Plan generator for HIT
+Depends: XML, digest, TSP, lattice, grid, libamtrack, splinefun
+Version: 0.8.0
+Date: 2014-07-09
+Author: Steffen Greilich
+Maintainer: Steffen Greilich <s.greilich@dkfz.de>
+Description: This package contains code that enable to create simple XML-based irradiation plans. The process is executed as a command line script distributed with this package (/exec/HIT_XML.R) and should be started using Rscript rather then using the individual R functions of the package in a custom environment (as this is highly likely to fail due to the immatureness of the code...). The use is explained in the 'example' section below. The package contains proprietary data from HIT (libC) AND MUST NOT BE DISTRIBUTED BEYOND DKFZ E0409 or HIT despite the GPL license! The authors refuse any responsibility in this case. Original code by Sarah Stefanowicz.
+License: GPL (>=3)
