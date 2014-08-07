@@ -1,7 +1,7 @@
 Package: HITXML
 Type: Package
 Title: XML Plan generator for HIT
-Depends: XML, digest, TSP, lattice, grid, libamtrack, splinefun
+Depends: XML, digest, TSP, lattice, grid, libamtrack
 Version: 0.8.0
 Date: 2014-07-09
 Author: Steffen Greilich
