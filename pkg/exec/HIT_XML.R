@@ -14,8 +14,22 @@
 # TODOs
 ############################################
 # Fine tuning parameters
-# Time estimate
+# Time estimate (completed in Oct. 2014 - Yukihara)
 ############################################
+
+# Modifications implemented (Oct. 2014, Yukihara) 
+# - small fixes to the code to allow it to generate multiple IES with
+#   different energies. 
+# - Modified to allow the repetition of IES without repeating the optimization. 
+# - The code now saves by default the plans in the new format (tested successfully
+#   at HIT)
+#
+# Known problems
+# - The function that gathers user input does not contain He ion and, therefore,
+#   does not ask for intensity. As a result, time estimate does not work. The plan
+#   should work without problems, since intensity information is not included
+#   in the plans.
+
 
 # Clear workspace, set version
 rm(list =ls())
@@ -45,13 +59,13 @@ user.input <- list( basic = list( date             = 20120412,
                                   patient.sex      = "M",
                                   therapist.name   = "USER NAME"),
                     
-                    IES   = list( list( energy.value.MeV.u     = 50,     # CAREFUL: if given manually (i.e., not interactively) this value has to match EXACTLY the libC data
-                                        chosen.idx             = 2,
-                                        chosen.foc.idx         = 6,
-                                        focus.FWHM.mm          = 20,     # CAREFUL: if given manually (i.e., not interactively) this value has to match EXACTLY the libC data
+                    IES   = list( list( energy.value.MeV.u     = 221.05,     # CAREFUL: if given manually (i.e., not interactively) this value has to match EXACTLY the libC data
+                                        chosen.idx             = 255,
+                                        chosen.foc.idx         = 1,
+                                        focus.FWHM.mm          = 4.9,     # CAREFUL: if given manually (i.e., not interactively) this value has to match EXACTLY the libC data
                                         field.shape.idx        = 1,      # c("square", "circular")
-                                        fluence.cm2.or.dose.Gy = 1e6,
-                                        field.size.mm          = 25,
+                                        fluence.cm2.or.dose.Gy = -0.02,
+                                        field.size.mm          = 150,
                                         r.min.mm               = 15)))
 
 # Read defaults
@@ -105,10 +119,16 @@ df.rippleFilter <- data.frame( filter.name      = c("None", "3mm"),
 
 df.fields       <- data.frame( shape            = c( "square", "circle"),
                                stringsAaFactors = FALSE)
+
 # TODO: Add variables for field shape here
 
 #######################################
 ## Get user inputs (if non-interactive)
+
+# There is currently a problem wiht the function HX.get.user.input.basic.
+# The function does not include He ions in a list of possible particles,
+# so it is necessary to update it.
+# (Yukihara, 30 Oct 14)
 
 if(!interactive.run.mode){
   user.input <- HX.get.user.input.basic(user.input      = user.input,
@@ -122,8 +142,6 @@ if(!interactive.run.mode){
 rippleFilter        <- df.rippleFilter$filter.name[user.input$basic$chosen.rifi.idx]
 ripplefilter.code   <- df.rippleFilter$filter.code[user.input$basic$chosen.rifi.idx]
 
-
-
 # load libC for chosen particle
 df.libc.HIT   <- read.table( system.file( "extdata",
                                           df.particles$libC.file.name[user.input$basic$chosen.particle],
@@ -133,9 +151,19 @@ df.libc.HIT   <- read.table( system.file( "extdata",
 					   						paste("F", 1:6,  ".mm",  sep = ""),
 					                        paste("I", 1:15, ".1.s", sep = "")))
 
+# Simple path (Yukihara, Oct. 2014)
+path.save   <- file.path( gsub( "\\", 
+                                "/", 
+                                paste( "./", 
+                                       user.input$basic$date,
+                                       sep = ""),
+                                fixed = TRUE))
+dir.create(path.save,
+           recursive = TRUE,
+           showWarnings = FALSE)
 
 if(!interactive.run.mode){
-  pdf(file = paste(user.input$basic$name.exp.run, ".pdf", sep = ""))
+  pdf(file = paste(path.save,"/",user.input$basic$name.exp.run, ".pdf", sep = ""))
 }
 
 title.doc <- paste(welcome.message,
@@ -175,7 +203,7 @@ repeat{
                                         df.libc.HIT    = df.libc.HIT)
 	}
 
-  
+  cat("Compute dose from fluence or vice versa\n")
 	# Compute dose from fluence or vice versa
   if(user.input$IES[[n.IES]]$fluence.cm2.or.dose.Gy < 0.0){
 	  dose.Gy     <- -1.0 * user.input$IES[[n.IES]]$fluence.cm2.or.dose.Gy
@@ -193,6 +221,7 @@ repeat{
 	                                              stopping.power.source.no = 3)$dose.Gy  # use ICRU49/73 data
 	}   
 	
+  cat("Prepare start and field parameters\n")
   # Prepare start and field parameters
 	if(df.fields$shape[user.input$IES[[n.IES]]$field.shape.idx] == "circle"){
 	   par.start    <- c(user.input$IES[[n.IES]]$focus.FWHM.mm / 2, 
@@ -205,6 +234,7 @@ repeat{
 		 field.par    <- user.input$IES[[n.IES]]$field.size.mm
 	}
 		
+  cat("Optimize field\n")
   # Optimize field
 	optim.beam.spot.grid <- HX.optimize.field( field.shape   = df.fields$shape[user.input$IES[[n.IES]]$field.shape.idx],
 		                                         par.start     = par.start,
@@ -241,7 +271,43 @@ repeat{
 								E.MeV.u       = user.input$IES[[n.IES]]$energy.value.MeV.u,
 								focus.FWHM.mm = user.input$IES[[n.IES]]$focus.FWHM.mm,
 								fluence.cm2   = fluence.cm2,
-								dose.Gy       = dose.Gy))
+								dose.Gy       = dose.Gy,
+                n.spots       = nrow(optim.beam.spot.grid), # new field added to table (Yukihara, Oct. 2014)
+                part.spot     = optim.beam.spot.grid$N.particles[1] # new field added to table (Yukihara, Oct. 2014)
+                  ))
+  
+  #Repeat IES? (Yukihara, Oct 2014)
+  if(!interactive.run.mode){
+    cat("\nRepeat IES? Enter TOTAL number of identical IES [press return for 1]?\n-->",sep="")
+    answer<-readLines(con=input.con,n=1)
+    n.repeats=as.numeric(answer)-1
+    if(!is.na(n.repeats) & n.repeats>0){
+      cat("\nCreating ",n.repeats," IES's, for a total of ",n.repeats+1," identical IES's.\n",sep="")
+      for(i in (n.IES+1):(n.IES+n.repeats)){
+        #repeat user input  
+        user.input$IES[[i]]=user.input$IES[[i-1]]
+      
+        # Repeat node
+        nodes.IES[[i]] <- xmlNode("IES", 
+                                    attrs        = c(number          = as.numeric(i),
+                                                     energy          = as.numeric(user.input$IES[[i]]$energy.value.MeV.u),
+                                                     focus           = as.numeric(user.input$IES[[i]]$focus.FWHM.mm)),
+                                    .children    = voxel.node.list)
+      
+        # Add to IES overview data frame
+        df.IES <- rbind(df.IES,
+                        data.frame( IES.no        = i,
+                                    E.MeV.u       = user.input$IES[[i]]$energy.value.MeV.u,
+                                    focus.FWHM.mm = user.input$IES[[i]]$focus.FWHM.mm,
+                                    fluence.cm2   = fluence.cm2,
+                                    dose.Gy       = dose.Gy,
+                                    n.spots       = nrow(optim.beam.spot.grid), # new field added to table (Yukihara, Oct. 2014)
+                                    part.spot     = optim.beam.spot.grid$N.particles[1] # new field added to table (Yukihara, Oct. 2014)
+                        ))
+      }
+      n.IES=n.IES+n.repeats
+    }
+  }
 	
   # Another IES?
 	if(!interactive.run.mode){
@@ -252,6 +318,7 @@ repeat{
 	  if(answer != 'y'){
 		  break
 	  }
+    user.input$IES=c(user.input$IES,list(list())) # Increase dimention to add IES (Yukihara, Oct. 2014)
   }else{
     break
   }
@@ -262,6 +329,68 @@ repeat{
 row.names(df.IES) <- 1:nrow(df.IES)
 clan.txtplot(df.IES)
 
+# Estimate irradiation time (Yukihara, Oct. 2014)
+total.particles=sum(df.IES$n.spots*df.IES$part.spot)
+duty.cycle=0.4
+
+if(user.input$basic$intensity == 0){
+  spill.intensity <- df.libc.HIT[1, 8+10]
+  cat("\n\n=====================================================")
+  cat("\nIntensity not defined.")
+  cat("\n=====================================================\n")
+}else{
+  spill.intensity <- df.libc.HIT[1,8 + user.input$basic$intensity]
+}
+cat("\nCalculating irradiation time with intensity = ",spill.intensity," particles/s")
+
+# spill.intensity=user.input$IES[[1]]$spill.intensity
+total.time.s=total.particles/spill.intensity/duty.cycle
+
+time.estimation.message=paste(
+  "\nTime of irradiation (estimate) and total dose",
+  "\n=================================================================",
+  "\n Total number of particles     =",total.particles,
+  "\n Spill intensity (particles/s) =",spill.intensity,
+  "\n Duty cycle                    =",duty.cycle,
+  "\n=================================================================",
+  "\n Estimated time (s)            =",total.time.s,
+  "\n Estimate time (min),          =",total.time.s/60,
+  "\n=================================================================",
+  "\n Total dose (Gy)            =",sum(df.IES$dose.Gy),
+  "\n=================================================================\n"
+  )
+cat(time.estimation.message)
+clan.txtplot(time.estimation.message)
+
+# Write plan documentation in detail (Yukihara, Oct. 2014)
+
+documentation <- paste("\n\nHIT_XML detailed plan documentation\n\n",
+                       "Plan name:",
+                       user.input$basic$date, "/", 
+                       user.input$basic$name.exp.series, "/", 
+                       user.input$basic$name.exp.run, "\n",
+                       "Projectile: ",
+                       df.particles$nice.particle.name[user.input$basic$chosen.particle],
+                       "\n",
+                       sep = "")
+for (i in 1:length(user.input$basic)){
+documentation <- paste(documentation,
+      names(user.input$basic)[i]," \t\t\t = \t\t\t",as.character(user.input$basic[i]),"\n",
+      sep="")}
+
+for (i in 1:length(user.input$IES)){
+  documentation <- paste(documentation, "\nIES no.", i, "\n", sep = "")
+  for (j in 1:length(user.input$IES[[i]])){
+    documentation <- paste(documentation,
+        names(user.input$IES[[i]][j])," = ",as.character(user.input$IES[[i]][[j]]),"\n",
+        sep = "")
+  }
+  
+}
+
+clan.txtplot(documentation)
+
+
 if(!interactive.run.mode){
   dev.off()
 }
@@ -270,7 +399,7 @@ if(!interactive.run.mode){
 if(!interactive.run.mode){
     plan.format <- as.numeric( HX.prompt.user( prompt        = "\nWrite plan in new or old format?",
                                                choices       = c("Old", "New"),
-                                               default       = 1,
+                                               default       = 2,
                                                input.con     = input.con))
 }else{
 	plan.format <- 1
@@ -295,14 +424,17 @@ repeat{
 	path.PBR    <- paste(path.result, "PhysicalBeamRecordFile\\", file.name.PBR, sep = "")
 	path.MBR    <- paste(path.result, "MachineBeamRecordFile\\", file.name.MBR, sep = "")
 
-	path.save   <- file.path( gsub( "\\", 
-									"/", 
-										paste( "./Rtt-Pt-Sim-WorkDir/HIT-Exp/", 
-										       user.input$basic$date, 
-											   "/", 
-										       user.input$basic$name.exp.series, 
-											   sep = ""),
-									fixed = TRUE))
+#   # Old directory structure from Steffen (removed by Yukihara, Oct. 2014)
+# 	path.save   <- file.path( gsub( "\\", 
+# 									"/", 
+# 										paste( "./Rtt-Pt-Sim-WorkDir/HIT-Exp/", 
+# 										       user.input$basic$date, 
+# 											   "/", 
+# 										       user.input$basic$name.exp.series, 
+# 											   sep = ""),
+# 									fixed = TRUE))
+  
+
 
 	program.context <- paste(path.plans, file.name.plan, sep = "")
 	md5.checksum    <- digest(program.context, algo = "md5")
@@ -448,7 +580,7 @@ repeat{
 							  .children = list(node.PTTxPlan))
 
 	if(user.input$IES[[1]]$spill.intensity == 0){
-	node.SfpParameters <- xmlNode( "SfpParameters", 
+    node.SfpParameters <- xmlNode( "SfpParameters", 
 								   .children = list( node.PBR, 
 													 node.MBR, 
 													 node.Spill, 
@@ -476,6 +608,8 @@ repeat{
 													 node.BeamPlan))
 	}
 
+
+  
 	# It seems we do not need the first three node for a working plan
 	node.WorkflowContext <- xmlNode( "WorkflowContext",
 									 .children = list( #node.Housekeeping,
@@ -483,17 +617,25 @@ repeat{
 													   #node.UIs,
 													   node.SfpParameters))
 
-	# THIS IS THE NEW PLAN FORMAT
-#	node.PTTxPlanMd5 <- xmlNode("PTTxPlanMd5",
-#								.children = node.PTTxPlan,
-#								attrs = c( md5         						= "noMD5")) 
-#									       xmlns:xsi   						= "http://www.w3.org/2001/XMLSchema-instance", 
-#									       xsi:noNamespaceSchemaLocation    = "RTT-PT-Plan.xsd"))
-	
+# 	# THIS IS THE NEW PLAN FORMAT
+# 	node.PTTxPlanMd5 <- xmlNode("PTTxPlanMd5",
+# 								.children = node.PTTxPlan,
+# 								attrs = c( md5         						= "noMD5")) 
+# 									       xmlns:xsi   						= "http://www.w3.org/2001/XMLSchema-instance", 
+# 									       xsi:noNamespaceSchemaLocation    = "RTT-PT-Plan.xsd"))
+
+  # THIS IS THE NEW PLAN FORMAT - with small fixes (Yukihara, Oct. 2014)
+  node.PTTxPlanMd5 <- xmlNode("PTTxPlanMd5",
+                            node.PTTxPlan,
+                            attrs = c( md5 = "noMD5",
+                                       "xmlns:xsi" = "http://www.w3.org/2001/XMLSchema-instance", 
+                                       "xsi:noNamespaceSchemaLocation" = "RTT-PT-Plan.xsd"))
+
 	# SAVE
 	dir.create(path.save,
 			   recursive = TRUE,
 			   showWarnings = FALSE)
+
 
 	prefix <- paste("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n",
 					"<!-- IRRADIATION PLAN CREATED WITH HIT_XML ",
@@ -521,10 +663,18 @@ repeat{
 			"\n\nYou can directly copy this folder onto Rtt-Pt-Sim drive E:\n!!! IMPORTANT: If your plan does not work at HIT, esp. with only one ion species double check with accelerator team if MD% checksums for the control system have been updated after any kind of system maintainance. This is the most likely cause for HITXML plans to fail. !!!\nDone.\n",
 			sep = "")
 	}else{
-		saveXML( node.PTTxPlanMd5, 
-				 file = file.path(paste(path.save, "/", file.name.plan, sep = "")),
-				 prefix = prefix)
-		cat("\nSaved plan file ",
+    
+	  # Save plan in the new format, according to Steffen's format (Yukihara, Oct. 2014)
+	  saveXML( node.PTTxPlanMd5, 
+	           file = file.path(paste(path.save, "/", file.name.plan, sep = "")),
+	           prefix = prefix)
+    
+#     # Save plan in simple new format, according to Julia's example (Yukihara, Oct. 2014)
+# 	  saveXML( node.PTTxPlan, 
+# 	           file = file.path(paste(path.save, "/", file.name.plan, sep = "")),
+# 	           prefix = prefix)
+
+cat("\nSaved plan file ",
 			file.name.plan,
 			"\nto location ",
 			path.save,
@@ -551,6 +701,8 @@ repeat{
 	df.defaults     <- result$df.defaults	
 }
 
+
+
 # Start pdf viewer for results, Acrobat Reader will
 # give problems here if alread open with same file
 # Rather use a viewer as "evince" as default
@@ -561,7 +713,7 @@ if(!interactive.run.mode){
       current.OS <- "Windows"
   }
   switch( match(current.OS, c("Linux", "Windows", "Apple")),
-      system(paste("evince ", first.name.exp.run, ".pdf", sep = "")),
+      system(paste("evince ./",path.save,"/",user.input$basic$name.exp.run, ".pdf", sep = "")),
   	system(paste("cmd /c start ", first.name.exp.run, ".pdf", sep = "")),
       system("Tba"))
 }
