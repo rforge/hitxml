@@ -82,7 +82,21 @@ primary.weights    <- abs(nlm(f=deviation.proton, p=c(1:no.IES))$estimate)
 total.weights      <- round( primary.weights * plateau.dose.Gy / mean(SOBP.dose(primary.weights)[min.depth.step:max.depth.step]), digits=0 )
 used.beam.energies <- beam.energies[jj]
 
-
+##############
+# save SOBP  #
+##############
+n.data             <- length(used.beam.energies)
+df                 <- data.frame(E.GeV   = used.beam.energies / 1000,
+                                 x.cm    = rep(0.0, n.data),
+                                 y.cm    = rep(0.0, n.data),
+                                 FWHM.cm = rep(0.1, n.data),
+                                 fluence = as.integer(total.weights))
+write.table(df,
+            file = "SOBP.dat",
+            quote = FALSE,
+            row.names = FALSE,
+            col.names = FALSE,
+            eol       = "\r\n" )
 
 ############################
 # plot SOBP (single field) #
