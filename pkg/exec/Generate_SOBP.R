@@ -10,10 +10,7 @@
 ############################
 rm(list = ls())
 
-library(libamtrack)
-library(lattice)
-
-source("./exec/Generate_SOBP_Functions.R")
+library(HITXML)
 
 ###########################
 # define input parameters #
@@ -37,13 +34,13 @@ split            <- as.numeric(sapply(split, function(x) x <- sub("_rifi3mm_ddd_
 DDD.file.names   <- DDD.file.names[order(split)]
 
 beam.energies    <- vector(mode="list", length=length(DDD.file.names))
-beam.energies    <- as.numeric(lapply(1:length(DDD.file.names), read.beam.energy, file.names=DDD.file.names))
+beam.energies    <- as.numeric(lapply(1:length(DDD.file.names), HX.read.beam.energy, file.names=DDD.file.names))
 
 BP.depth         <- vector(mode="list", length=length(DDD.file.names))
-BP.depth         <- as.numeric(lapply(1:length(DDD.file.names), get.BP.depth, file.names=DDD.file.names))
+BP.depth         <- as.numeric(lapply(1:length(DDD.file.names), HX.get.BP.depth, file.names=DDD.file.names))
 
 DDD.list         <- vector(mode="list", length=length(DDD.file.names))
-DDD.list         <- lapply(1:length(DDD.file.names), read.DDD, file.names=DDD.file.names)
+DDD.list         <- lapply(1:length(DDD.file.names), HX.read.DDD, file.names=DDD.file.names)
 
 #############################
 # calculate the number of 
@@ -78,8 +75,8 @@ depth.seq          <- seq(from=0, to=z.max, by=z.max/resolution)
 min.depth.step     <- ceiling( DDD.list.sub[[1]]$z.cm[which.max(DDD.list.sub[[1]]$D.Gy)] / (z.max/resolution) )
 max.depth.step     <- floor( DDD.list.sub[[no.IES]]$z.cm[which.max(DDD.list.sub[[no.IES]]$D.Gy)] / (z.max/resolution) )
 
-primary.weights    <- abs(nlm(f=deviation.proton, p=c(1:no.IES))$estimate)
-total.weights      <- round( primary.weights * plateau.dose.Gy / mean(SOBP.dose(primary.weights)[min.depth.step:max.depth.step]), digits=0 )
+primary.weights    <- abs(nlm(f=HX.deviation.proton, p=c(1:no.IES))$estimate)
+total.weights      <- round( primary.weights * plateau.dose.Gy / mean(HX.SOBP.dose(primary.weights)[min.depth.step:max.depth.step]), digits=0 )
 used.beam.energies <- beam.energies[jj]
 
 ##############
@@ -102,7 +99,7 @@ write.table(df,
 # plot SOBP (single field) #
 ############################
 
-plot1  <- xyplot(SOBP.dose(total.weights) ~ depth.seq,
+plot1  <- xyplot(HX.SOBP.dose(total.weights) ~ depth.seq,
                  type = "l",
                  lwd  = 3,
                  col ="blue",
