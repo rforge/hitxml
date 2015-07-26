@@ -2,27 +2,31 @@
 # dataRBE CLASS
 ################################
 setClass( Class            = "dataRBE",
-          slots            = c( tissue           = "character",
-                                alpha.1.Gy       = "numeric",
-                                beta.1.Gy2       = "numeric",
+          slots            = c( cell.type        = "character",
+                                file.date        = "character",
+                                alpha.X          = "numeric",
+                                beta.X           = "numeric",
                                 D.cut.Gy         = "numeric",
                                 r.nucleus.um     = "numeric",
-                                RBE.alpha        = "data.frame"),
-          prototype        = list(  tissue           = character(),
-                                    alpha.1.Gy       = numeric(),
-                                    beta.1.Gy2       = numeric(),
+                                RBE              = "data.frame"),
+          prototype        = list(  cell.type        = character(),
+                                    filedate         = character(),
+                                    alpha.X          = numeric(),
+                                    beta.X           = numeric(),
                                     D.cut.Gy         = numeric(),
                                     r.nucleus.um     = numeric(),
-                                    RBE.alpha        = data.frame(E.MeV.u     = numeric(), 
+                                    RBE              = data.frame(E.MeV.u     = numeric(), 
                                                                   projectile  = character(),
-                                                                  RBE.alpha   = numeric())))
+                                                                  Z           = integer(),
+                                                                  A           = integer(),
+                                                                  RBE.initial = numeric())))
 ################################
 # Constructor
 ################################
 dataRBE <- function(file.name, rbe.path = "."){
   
   # Nested function to extract header items
-  read.item  <-  function(data, code){
+  read.item.numeric  <-  function(data, code){
     line  <-	input[grep(code, data)]
     if (!is.null(line)){
       return(as.numeric(substring( line, regexpr(" ", line) + 1, nchar(line))))
@@ -30,12 +34,36 @@ dataRBE <- function(file.name, rbe.path = "."){
       return(0.0)
     }
   }
-  
+  read.item.character  <-  function(data, code){
+    # returns string w/o leading or trailing whitespace
+    trim <- function (x) gsub("^\\s+|\\s+$", "", x)
+    
+    line  <-	input[grep(code, data)]
+    if (!is.null(line)){
+      return(trim(substring( line, regexpr(" ", line) + 1, nchar(line))))
+    }else{
+      return(0.0)
+    }
+  }
+
   input		<-	scan(file.path(rbe.path,  
-                           paste0(file.name, ".rbe"), 
-                           fsep = .Platform$file.sep),
+                             file.name, 
+                             fsep = .Platform$file.sep),
                    what = "character", 
                    sep = "\n")
+  
+  #################
+  # read parameters
+  file.type     <-  read.item.character(input, "!filetype")
+  if(file.type != "RBE"){
+    stop("File is not a valid RBE data file.")
+  }
+  file.date     <-  read.item.character(input, "!filedate")
+  alpha.X    	  <-	read.item.numeric(input, "!alpha")
+  beta.X    	  <-	read.item.numeric(input, "!beta")
+  D.cut.Gy		  <-	read.item.numeric(input, "!cut")
+  r.nucleus.um	<-	read.item.numeric(input, "!rnucleus")
+  
   
   ######################
   # read projectile data
@@ -47,11 +75,14 @@ dataRBE <- function(file.name, rbe.path = "."){
     #i <- 1
     projectile.name	<-	substring(input[lines[i]], 12, nchar(input[lines[i]]))
     projectile.name	<-	sub("^[[:space:]]*(.*?)[[:space:]]*$", "\\1", projectile.name, perl=TRUE)
-    xx			<-	input[(lines[i] + 3):(lines[i] + 3 + length.data.set)]
-    xx			<-	sub("^[[:space:]]*(.*?)[[:space:]]*$", "\\1", xx, perl=TRUE)
-    tmp			<-	data.frame(	E.MeV.u 	= 	as.numeric(substring(xx, 1, regexpr(" ", xx) - 1)),
-                            RBE.alpha =  	as.numeric(substring(xx, regexpr(" ", xx) + 1), nchar(xx)))
+    xx			        <-	input[(lines[i] + 3):(lines[i] + 3 + length.data.set)]
+    xx			        <-	sub("^[[:space:]]*(.*?)[[:space:]]*$", "\\1", xx, perl=TRUE)
+    tmp			        <-	data.frame(	E.MeV.u 	  = 	as.numeric(substring(xx, 1, regexpr(" ", xx) - 1)),
+                                    RBE.initial =  	as.numeric(substring(xx, regexpr(" ", xx) + 1), nchar(xx)))
     tmp$projectile	<-	as.character(rep(projectile.name, nrow(tmp)))
+    particle.no     <-  AT.particle.no.from.particle.name(tmp$projectile)
+    tmp$Z           <-  AT.Z.from.particle.no(particle.no)$Z
+    tmp$A           <-  AT.A.from.particle.no(particle.no)$A
     if(is.null(df)){
       df			<-	tmp
     }else{
@@ -59,33 +90,125 @@ dataRBE <- function(file.name, rbe.path = "."){
     }
   }
   
-  #############
-  # read parameters
-  alpha.1.Gy	  <-	read.item(input, "!alpha")
-  beta.1.Gy2	  <-	read.item(input, "!beta")
-  D.cut.Gy		  <-	read.item(input, "!cut")
-  r.nucleus.um	<-	read.item(input, "!rnucleus")
-  
-  ############################
-  # covert projectile to (A,Z)
-  
-  if(F){
-    elements		<-	data.frame(	Z	= 1:10,
-                           name	= c(	"H", "He", "Li", "Be", "B",
-                                     "C", "N", "O", "F", "Ne"))
-  
-  df$element		<-	substring(df$projectile, regexpr("[[:alpha:]]", df$projectile, perl = TRUE), nchar(df$projectile))
-  df$A			<-	as.numeric(substring(df$projectile, 1, regexpr("[[:alpha:]]", df$projectile, perl = TRUE) - 1))
-  df$Z			<-	elements$Z[match(df$element, elements$name)]
-  
-  df$Z.A		<-	paste("(", sprintf("%02d", df$Z), ",", sprintf("%02d", df$A), ")", sep = "")
-  }
-  
+
   new("dataRBE",
-      tissue       = gsub(".rbe", "", file.name),
-      alpha.1.Gy   = alpha.1.Gy,
-      beta.1.Gy2   = beta.1.Gy2,
+      cell.type    = gsub(".rbe", "", file.name),
+      file.date    = file.date,
+      alpha.X      = alpha.X,
+      beta.X       = beta.X,
       D.cut.Gy     = D.cut.Gy,
       r.nucleus.um = r.nucleus.um,
-      RBE.alpha    = df)
+      RBE          = df)
 }
+
+
+################################
+# Getter functions
+################################
+alpha.X <- function(x){
+  if(class(x) != "dataRBE"){
+    stop("x must be of class 'dataRBE'")
+  }
+  if(is.null(x@alpha.X)){
+    stop("No value for alpha found")
+  }else{
+    return(x@alpha.X)
+  }
+}
+
+beta.X <- function(x){
+  if(class(x) != "dataRBE"){
+    stop("x must be of class 'dataRBE'")
+  }
+  if(is.null(x@beta.X)){
+    stop("No value for beta found")
+  }else{
+    return(x@beta.X)
+  }
+}
+
+D.cut.Gy <- function(x){
+  if(class(x) != "dataRBE"){
+    stop("x must be of class 'dataRBE'")
+  }
+  if(is.null(x@D.cut.Gy)){
+    stop("No value for Dcut found")
+  }else{
+    return(x@D.cut.Gy)
+  }
+}
+
+r.nucleus.um <- function(x){
+  if(class(x) != "dataRBE"){
+    stop("x must be of class 'dataRBE'")
+  }
+  if(is.null(x@r.nucleus.um)){
+    stop("No value for nucleus radius found")
+  }else{
+    return(x@r.nucleus.um)
+  }
+}
+
+# FUNCTION RBE.initial
+#  Returns initial RBE (values stored in RBE file) for
+#  a series of projektiles and energies
+#
+# Arguments
+#  x            dataRBE object
+#  projectile   particle name
+#  E.MeV.u      energy of the particle
+#
+RBE.initial <- function(x, projectile, E.MeV.u){
+  if(length(projectile) != length(E.MeV.u)){
+    stop("Arguments must have same length.")
+  }
+  
+  RBE   <- numeric(length(projectile))
+  
+  for(cur.projectile in unique(projectile)){
+    # cur.projectile <- unique(projectile)[2]
+    ii        <- projectile == cur.projectile
+    jj        <- x@RBE$projectile == cur.projectile
+    no.data   <- FALSE
+    if(sum(jj) == 0){
+      Z <- AT.Z.from.particle.no(AT.particle.no.from.particle.name(cur.projectile))$Z
+      fall.back.projectile <- AT.particle.name.from.particle.no(Z*1000+2*Z)
+      warning(paste0("Projectile ", 
+                     cur.projectile,
+                     " not available in RBE data. Trying ",
+                     fall.back.projectile,
+                     " instead."))
+      jj <- x@RBE$projectile == fall.back.projectile
+      if(sum(jj) == 0){
+        warning(paste0("Fall back projectile ", 
+                       cur.projectile,
+                       " also not available in RBE data. Returning NAs."))
+        no.data <- TRUE
+      }
+    }
+    if(no.data){
+      RBE[ii] <- NA
+    }else{
+      RBE[ii]   <- approx( x@RBE$E.MeV.u[jj], 
+                           x@RBE$RBE.initial[jj], 
+                           xout=E.MeV.u[ii])$y
+    }
+  }
+  return(RBE)
+}
+
+
+# FUNCTION alpha.ion.1.Gy
+#  computes the initial slope of the ion dose-effect curve (alpha_ion)
+#
+# Arguments
+#  x            dataRBE object
+#  projectile   particle name
+#  E.MeV.u      energy of the particle
+#
+alpha.ion.1.Gy  <- function(x, projectile, S.MeV.cm2.g){
+  return(alpha.X(x) * get.RBE.initial(RBE.data, projectile, S.MeV.cm2.g))
+}
+
+
+
