@@ -34,6 +34,26 @@ dataSpectrum <- function(SPC.data, depth.g.cm2){
       spectrum            = res)
 }
 
+particles.per.primary <- function(x){
+  return(sum(x@spectrum$N.per.primary))
+}
+
+Mass.Stopping.Power.MeV.cm2.g <- function(x, stopping.power.source){
+  return(  AT.Mass.Stopping.Power( stopping.power.source,
+                                   x@spectrum$E.mid.MeV.u,
+                                   x@spectrum$particle.no,
+                                   AT.material.no.from.material.name(x@target.material))$stopping.power.MeV.cm2.g)
+  
+}
+
+dose.per.primary <- function(x, stopping.power.source){
+  LET.MeV.cm            <- Mass.Stopping.Power.MeV.cm2.g(x, stopping.power.source)
+  
+  density.g.cm3         <- AT.get.materials.data(AT.material.no.from.material.name(x@target.material))$density.g.cm3
+  
+  return(sum(LET.MeV.cm * x@spectrum$N.per.primary) / density.g.cm3 * 1.60217657e-10)
+}
+
 ###########################################
 # R function for interpolation of spc files
 # with depth, was in libamtrack

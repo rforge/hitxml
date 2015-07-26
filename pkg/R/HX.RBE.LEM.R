@@ -14,7 +14,7 @@
 #                biological dose 
 #                and absorbed dose
 
-HX.RBE.LEM <- function (RBE.data, N.event, N.runs, D.Gy, spc, df.spect, write.output = FALSE){
+HX.RBE.LEM <- function (RBE.data, Spectrum.data, dose.Gy, N.events = 100, N.runs = 10, write.output = TRUE){
   
   ##################################################
   # calculate the number of hits on a cell nucleus #
@@ -23,69 +23,40 @@ HX.RBE.LEM <- function (RBE.data, N.event, N.runs, D.Gy, spc, df.spect, write.ou
   A.nucl.cm2      <- A.nucl.um2 / (10000^2)
   
   # relative fluence (particle per primary particle)
-  rel.fluence.sum <- sum(df.spect$N.per.primary) 
-  
-  # calculation of the phys. dose at the position of the Bragg peak
-  df.spect.1  <- spc$spc[spc$spc$depth.step == 1,]
-  #df.spect.45 <- spc$spc[spc$spc$depth.step == 45,] # depthstep 45: position of the Bragg peak
-  # [can be checked with:
-  #  which(Results$D.abs.Gy == max(Results$D.abs.Gy))]
-  #df.spect.45$N.per.primary <- df.spect.45$N.per.primary / sum(df.spect.1$N.per.primary) # normalization
-  
-  
-  #dose.depth45.Gy <- sum(AT.dose.Gy.from.fluence.cm2(E.MeV.u = df.spect.45$E.mid.MeV.u,       
-  #particle.no = df.spect.45$particle.no,   
-  #fluence.cm2 = df.spect.45$N.per.primary,
-  #material.no = 1,
-  #stopping.power.source.no = 0)$dose.Gy)
-  # AT.dose.Gy.from.fluence.cm2: returns dose in Gy for each given particle
-  
-  # primary fluence for the given dose
-  #prim.fluence <- D.Gy / (dose.depth45.Gy)
-  
-  #effective fluence
-  eff.fluence.1.cm2 <- rel.fluence.sum  * 217647.3  # 4Gy: F= 43529457, 0.02Gy: F = 217647.3
+  fluence.spectrum <- particles.per.primary(Spectrum.data) 
+  dose.spectrum.Gy <- dose.per.primary(Spectrum.data, "PSTAR")
+  # fluence factor to get dose set
+  fluence.factor   <- dose.Gy / dose.spectrum.Gy
   
   
   # mean number of hits on a cell nucleus (N.Hit.average)
-  N.hit.avg <- A.nucl.cm2 * eff.fluence.1.cm2
+  N.hit.avg <- A.nucl.cm2 * fluence.spectrum * fluence.factor
   
   # N.Hit has to be sampled at random from the Poisson distribution
-  N.hit <- rpois(N.event, N.hit.avg)
+  N.hit <- rpois(N.events, N.hit.avg)
   
+  # convert the fluence into a probability distribution 
+  norm.fluence <- Spectrum.data@spectrum$N.per.primary / fluence.spectrum
   
-  #######################################################
-  # convert the fluence into a probability distribution #
-  #######################################################
-  
-  df.spect$norm.fluence <- df.spect$N.per.primary / sum(df.spect$N.per.primary)
-  
-  
-  #################################
-  # compute (mass) stopping power #
-  #################################
-  
-  #df.spect$S.MeV.cm2.g <- AT.Stopping.Power.MeV.cm2.g(stopping.power.source.no = 0,
-  #                                                    E.MeV.u                  = df.spect$E.mid.MeV.u, 
-  #                                                    particle.no              = df.spect$particle.no, 
-  #                                                    material.no              = 1)$Stopping.Power.MeV.cm2.g
-  # AT.Stopping.Power.MeV.cm2.g: main access method to stopping power data
-  
+  # Pre-compute stopping powers
+  S.MeV.cm2.g  <- Mass.Stopping.Power.MeV.cm2.g(Spectrum.data, "PSTAR")
   ###############################################################
   # create a set of particles (particle type T(k), energy E(k)) #
   ###############################################################
   
-  D.abs.Nhit.Gy <- numeric(N.event) # initialization (absorbed dose)
-  N.lethal.Nhit <- numeric(N.event) # initialization (effective damage)
+  D.abs.Nhit.Gy <- numeric(N.events) # initialization (absorbed dose)
+  N.lethal.Nhit <- numeric(N.events) # initialization (effective damage)
   
   # index
-  df.spect$idx <- 1:nrow(df.spect)
+  idx          <- 1:length(norm.fluence)
   
   results      <- NULL
   # Loop over all runs
   for(j in 1:N.runs){
     # Loop over all events
-    for (i in 1:N.event){
+    # j <- 1
+    for (i in 1:N.events){
+      # i <- 1
       
       # first case: no particle hits a cell nucleus
       if (N.hit[i] == 0) {
@@ -97,18 +68,18 @@ HX.RBE.LEM <- function (RBE.data, N.event, N.runs, D.Gy, spc, df.spect, write.ou
       else{
         
         # sampled n = N.Hit times to obtain a set (T(k), E(k))
-        particles.idx <- sample(x = df.spect$idx,
+        particles.idx <- sample(x = idx,
                                 size = N.hit[i],
                                 replace = TRUE,
-                                prob = df.spect$norm.fluence)
+                                prob = norm.fluence)
         
         ##############################
         # new table for sampled data #
         ##############################
         
-        df.sample <- data.frame( #E.MeV.u      = df.spect$E.mid.MeV.u[particles.idx],
-          particle.no  = df.spect$particle.no[particles.idx],
-          S.MeV.cm2.g  = df.spect$S.MeV.cm2.g[particles.idx])
+        particle.no  <- Spectrum.data@spectrum$particle.no[particles.idx]
+        E.MeV.u      <- Spectrum.data@spectrum$E.mid.MeV.u[particles.idx]
+        LET          <- S.MeV.cm2.g[particles.idx]
         
         
         #################################################################
@@ -117,48 +88,42 @@ HX.RBE.LEM <- function (RBE.data, N.event, N.runs, D.Gy, spc, df.spect, write.ou
         
         # (1) absorbed dose 
         
-        c.1.cm2  <- 1.6 * 10^(-10) * (A.nucl.cm2)^(-1)
-        df.sample$d.Gy     <- df.sample$S.MeV.cm2.g * c.1.cm2
-        df.sample$D.abs.Gy <- cumsum(df.sample$d.Gy) # returns a vector whose elements are the cumulative sums
+        c.1.cm2            <- 1.60217657e-10 * (A.nucl.cm2)^(-1)
+        d.Gy               <- LET * c.1.cm2
+        D.abs.Gy           <- cumsum(d.Gy) # returns a vector whose elements are the cumulative sums
         
         
         # (2) effective damage
         
         # D.abs(k-1)
-        df.sample$D.k1 <- df.sample$D.abs.Gy - df.sample$d.Gy
+        D.k1               <- D.abs.Gy - d.Gy
         
-        # boolean vector
-        df.sample$jj <- df.sample$D.k1 < get.D.cut.Gy(RBE.data, projectile = spc$projectile)
+        jj                 <- D.k1 < D.cut.Gy(RBE.data)
         
         # alpha.ion for all particles.idx
-        alpha.ion.1.Gy <- numeric(length(particles.idx))
-        alpha.fun <- function(x) {
-          get.alpha.ion.1.Gy(RBE.data = RBE.data,
-                             projectile = AT.particle.name.from.particle.no(df.spect$particle.no[particles.idx[x]]),
-                             S.MeV.cm2.g = df.spect$S.MeV.cm2.g[particles.idx[x]])
-        }
-        alpha.ion.1.Gy <- as.numeric(lapply(c(1:length(particles.idx)), alpha.fun))
+        cur.alpha.ion      <- alpha.ion(RBE.data, 
+                                        AT.particle.name.from.particle.no(particle.no), 
+                                        E.MeV.u)
         
         # dose dependent slopes of the heavy ion effect curve
-        df.sample$s.1.Gy = alpha.ion.1.Gy + (get.s.max.1.Gy(RBE.data, projectile= spc$projectile) - alpha.ion.1.Gy) *
-          df.sample$D.k1 / get.D.cut.Gy(RBE.data, projectile = spc$projectile)
-        df.sample$s.1.Gy[!df.sample$jj] <- get.s.max.1.Gy(RBE.data, projectile = spc$projectile)
+        s.1.Gy      <- (cur.alpha.ion + s.max(RBE.data) - cur.alpha.ion) * D.k1 / D.cut.Gy(RBE.data)
+        s.1.Gy[!jj] <- s.max(RBE.data)
         
         # effective damage
-        df.sample$n        <- df.sample$s.1.Gy * df.sample$S.MeV.cm2.g * c.1.cm2
-        df.sample$N.lethal <- cumsum(df.sample$n)
+        n        <- s.1.Gy * LET * c.1.cm2
+        N.lethal <- cumsum(n)
         
         
         # D.abs and N.lethal for N.hit
-        D.abs.Nhit.Gy[i] <- df.sample$D.abs.Gy[N.hit[i]]
-        N.lethal.Nhit[i] <- df.sample$N.lethal[N.hit[i]]
+        D.abs.Nhit.Gy[i] <- D.abs.Gy[N.hit[i]]
+        N.lethal.Nhit[i] <- N.lethal[N.hit[i]]
         
         # Output progress
         if(write.output){
           cat("Done event no. ", i, " in run ", j, 
               "- hits: ", N.hit[i], 
-              " | D.abs.Gy: ", df.sample$D.abs.Gy[N.hit[i]],
-              " | lethal hits: ", df.sample$N.lethal[N.hit[i]],
+              " | D.abs.Gy: ", D.abs.Gy[N.hit[i]],
+              " | lethal hits: ", N.lethal[N.hit[i]],
               "\n")
         }
         
@@ -180,10 +145,10 @@ HX.RBE.LEM <- function (RBE.data, N.event, N.runs, D.Gy, spc, df.spect, write.ou
     ############
     
     #average absorbed dose
-    D.abs.average.Gy <- sum (df.events$D.abs.Nhit.Gy) / N.event
+    D.abs.average.Gy <- sum (df.events$D.abs.Nhit.Gy) / N.events
     
     #average survival
-    s.average.1.Gy <- sum( exp( - df.events$N.lethal.Nhit)) / N.event
+    s.average.1.Gy <- sum( exp( - df.events$N.lethal.Nhit)) / N.events
     
     #average damage
     N.lethal.average <- -log(s.average.1.Gy)
@@ -195,21 +160,15 @@ HX.RBE.LEM <- function (RBE.data, N.event, N.runs, D.Gy, spc, df.spect, write.ou
     
     # compute D.biol by inversion of the linear-quadratic equation for the cellular survival 
     
-    u <- get.alpha.1.Gy(RBE.data, projectile= spc$projectile) /
-      (2 * get.beta.1.Gy2(RBE.data, projectile= spc$projectile))
+    u <- alpha.X(RBE.data) / (2 * beta.X(RBE.data))
     
     # case differentiation: D < D.cut & D >= D.cut
-    D1.Gy <- - u + sqrt(u^2 + N.lethal.average / get.beta.1.Gy2(RBE.data, projectile= spc$projectile))
-    D2.Gy <- (N.lethal.average -
-                get.alpha.1.Gy(RBE.data, projectile= spc$projectile) *
-                get.D.cut.Gy(RBE.data, projectile= spc$projectile) -
-                get.beta.1.Gy2(RBE.data, projectile= spc$projectile) *
-                (get.D.cut.Gy(RBE.data, projectile= spc$projectile))^2) /
-      get.s.max.1.Gy(RBE.data, projectile= spc$projectile) +
-      get.D.cut.Gy(RBE.data, projectile= spc$projectile)
+    D1.Gy <- - u + sqrt(u^2 + N.lethal.average / beta.X(RBE.data))
+    D2.Gy <- (N.lethal.average - alpha.X(RBE.data) * D.cut.Gy(RBE.data) -
+                beta.X(RBE.data) * (D.cut.Gy(RBE.data))^2) / s.max(RBE.data) + D.cut.Gy(RBE.data)
     
     # boolean vector
-    ii <- D1.Gy < get.D.cut.Gy(RBE.data, projectile= spc$projectile)
+    ii <- D1.Gy <D.cut.Gy(RBE.data)
     
     if (ii) {D.biol.Gy <- D1.Gy} else{D.biol.Gy <- D2.Gy}
     

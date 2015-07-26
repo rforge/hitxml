@@ -28,6 +28,11 @@ dataSPC <- function(file.name, spc.path = "."){
   res   <- SPC.read( file.name = file.path(spc.path,  
                                            file.name, 
                                            fsep = .Platform$file.sep))
+  # Replace target material name by libamtrack compatible
+  if(res$target.material == "H2O"){
+    res$target.material = "Water, Liquid"
+  }
+
   new("dataSPC",
       projectile          = res$projectile,
       beam.energy.MeV.u   = res$energy.MeV.u,
