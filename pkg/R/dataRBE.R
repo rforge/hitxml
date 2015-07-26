@@ -149,6 +149,12 @@ r.nucleus.um <- function(x){
   }
 }
 
+#  Computes the maximum slope of the X-ray dose-effect curve
+s.max  <- function(x){
+  return(alpha.X(x) + (2 * beta.X(x) * D.cut.Gy(x)) )
+}
+
+
 # FUNCTION RBE.initial
 #  Returns initial RBE (values stored in RBE file) for
 #  a series of projektiles and energies
@@ -198,17 +204,25 @@ RBE.initial <- function(x, projectile, E.MeV.u){
 }
 
 
-# FUNCTION alpha.ion.1.Gy
-#  computes the initial slope of the ion dose-effect curve (alpha_ion)
+# Computes the initial slope of the ion dose-effect curve
 #
 # Arguments
 #  x            dataRBE object
 #  projectile   particle name
 #  E.MeV.u      energy of the particle
 #
-alpha.ion.1.Gy  <- function(x, projectile, S.MeV.cm2.g){
-  return(alpha.X(x) * get.RBE.initial(RBE.data, projectile, S.MeV.cm2.g))
+alpha.ion  <- function(x, projectile, E.MeV.u){
+  return(alpha.X(x) * RBE.initial(x, projectile, E.MeV.u))
 }
 
-
+# Computes the beta coefficient for the ion dose-effect curve
+#
+# Arguments
+#  x            dataRBE object
+#  projectile   particle name
+#  E.MeV.u      energy of the particle
+#
+beta.ion  <- function(x, projectile, E.MeV.u){
+  return( s.max(x) - alpha.ion(x, projectile, E.MeV.u) / (2 * D.cut.Gy(x)) )
+}
 
