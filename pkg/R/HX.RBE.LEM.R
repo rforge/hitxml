@@ -14,7 +14,7 @@
 #                biological dose 
 #                and absorbed dose
 
-HX.RBE.LEM <- function (RBE.data, Spectrum.data, dose.Gy, N.events = 100, N.runs = 10, write.output = TRUE){
+HX.RBE.LEM <- function (RBE.data, Spectrum.data, dose.Gy, N.events = 100, N.runs = 10, write.output = FALSE){
   
   ##################################################
   # calculate the number of hits on a cell nucleus #
@@ -34,10 +34,7 @@ HX.RBE.LEM <- function (RBE.data, Spectrum.data, dose.Gy, N.events = 100, N.runs
   
   # N.Hit has to be sampled at random from the Poisson distribution
   N.hit <- rpois(N.events, N.hit.avg)
-  
-  # convert the fluence into a probability distribution 
-  norm.fluence <- Spectrum.data@spectrum$N.per.primary / fluence.spectrum
-  
+   
   # Pre-compute stopping powers
   S.MeV.cm2.g  <- Mass.Stopping.Power.MeV.cm2.g(Spectrum.data, "PSTAR")
   ###############################################################
@@ -48,7 +45,7 @@ HX.RBE.LEM <- function (RBE.data, Spectrum.data, dose.Gy, N.events = 100, N.runs
   N.lethal.Nhit <- numeric(N.events) # initialization (effective damage)
   
   # index
-  idx          <- 1:length(norm.fluence)
+  idx          <- 1:nrow(Spectrum.data@spectrum)
   
   results      <- NULL
   # Loop over all runs
@@ -58,20 +55,17 @@ HX.RBE.LEM <- function (RBE.data, Spectrum.data, dose.Gy, N.events = 100, N.runs
     for (i in 1:N.events){
       # i <- 1
       
-      # first case: no particle hits a cell nucleus
+      # in case no particle hits a cell nucleus, everything is 0
       if (N.hit[i] == 0) {
         D.abs.Nhit.Gy[i] <- 0
         N.lethal.Nhit[i] <- 0
-      }
-      
-      # second case: at least one particle hits a cell nucleus
-      else{
+      }else{
         
         # sampled n = N.Hit times to obtain a set (T(k), E(k))
-        particles.idx <- sample(x = idx,
-                                size = N.hit[i],
+        particles.idx <- sample(x       = idx,
+                                size    = N.hit[i],
                                 replace = TRUE,
-                                prob = norm.fluence)
+                                prob    = Spectrum.data@spectrum$N.per.primary)
         
         ##############################
         # new table for sampled data #
@@ -88,7 +82,7 @@ HX.RBE.LEM <- function (RBE.data, Spectrum.data, dose.Gy, N.events = 100, N.runs
         
         # (1) absorbed dose 
         
-        c.1.cm2            <- 1.60217657e-10 * (A.nucl.cm2)^(-1)
+        c.1.cm2            <- 1.60217657e-10 / A.nucl.cm2
         d.Gy               <- LET * c.1.cm2
         D.abs.Gy           <- cumsum(d.Gy) # returns a vector whose elements are the cumulative sums
         
@@ -106,7 +100,7 @@ HX.RBE.LEM <- function (RBE.data, Spectrum.data, dose.Gy, N.events = 100, N.runs
                                         E.MeV.u)
         
         # dose dependent slopes of the heavy ion effect curve
-        s.1.Gy      <- (cur.alpha.ion + s.max(RBE.data) - cur.alpha.ion) * D.k1 / D.cut.Gy(RBE.data)
+        s.1.Gy      <- cur.alpha.ion + (s.max(RBE.data) - cur.alpha.ion) * D.k1 / D.cut.Gy(RBE.data)
         s.1.Gy[!jj] <- s.max(RBE.data)
         
         # effective damage
@@ -132,23 +126,11 @@ HX.RBE.LEM <- function (RBE.data, Spectrum.data, dose.Gy, N.events = 100, N.runs
     } # N.event
     
     
-    ######################################
-    # new table for the different events #
-    ######################################
-    
-    df.events <- data.frame( D.abs.Nhit.Gy = D.abs.Nhit.Gy,
-                             N.lethal.Nhit = N.lethal.Nhit)
-    
-    
-    ############
-    # averages #
-    ############
-    
     #average absorbed dose
-    D.abs.average.Gy <- sum (df.events$D.abs.Nhit.Gy) / N.events
+    D.abs.average.Gy <- sum (D.abs.Nhit.Gy) / N.events
     
     #average survival
-    s.average.1.Gy <- sum( exp( - df.events$N.lethal.Nhit)) / N.events
+    s.average.1.Gy <- sum( exp( -1.0*N.lethal.Nhit)) / N.events
     
     #average damage
     N.lethal.average <- -log(s.average.1.Gy)
@@ -164,13 +146,12 @@ HX.RBE.LEM <- function (RBE.data, Spectrum.data, dose.Gy, N.events = 100, N.runs
     
     # case differentiation: D < D.cut & D >= D.cut
     D1.Gy <- - u + sqrt(u^2 + N.lethal.average / beta.X(RBE.data))
-    D2.Gy <- (N.lethal.average - alpha.X(RBE.data) * D.cut.Gy(RBE.data) -
-                beta.X(RBE.data) * (D.cut.Gy(RBE.data))^2) / s.max(RBE.data) + D.cut.Gy(RBE.data)
+    D2.Gy <- (N.lethal.average - alpha.X(RBE.data) * D.cut.Gy(RBE.data) - beta.X(RBE.data) * D.cut.Gy(RBE.data)^2) / s.max(RBE.data) + D.cut.Gy(RBE.data)
     
-    # boolean vector
-    ii <- D1.Gy <D.cut.Gy(RBE.data)
-    
-    if (ii) {D.biol.Gy <- D1.Gy} else{D.biol.Gy <- D2.Gy}
+    if (D1.Gy < D.cut.Gy(RBE.data)){
+      D.biol.Gy <- D1.Gy
+    }else{
+      D.biol.Gy <- D2.Gy}
     
     
     ###############
@@ -180,17 +161,14 @@ HX.RBE.LEM <- function (RBE.data, Spectrum.data, dose.Gy, N.events = 100, N.runs
     LEM.RBE <- D.biol.Gy / D.abs.average.Gy
     
     run.results <- matrix(ncol=3, nrow=1, data = c(LEM.RBE, D.biol.Gy, D.abs.average.Gy))
-    results <- rbind(results, run.results)
+    results     <- rbind(results, run.results)
   }# N.runs
   
-  df <- data.frame( RBE         = mean(results[,1]),
-                    sd.RBE      = sd(results[,1]),
-                    u.RBE       = sd(results[,1]) / sqrt(N.runs),
-                    D.biol.Gy   = mean(results[,2]),
-                    sd.D.biol.Gy = sd(results[,2]),
-                    u.D.biol.Gy = sd(results[,2]) / sqrt(N.runs),
-                    D.Gy        = mean(results[,3]),
-                    sd.D.Gy     = sd(results[,3]),
-                    u.D.Gy      = sd(results[,3]) / sqrt(N.runs))
-  return(df)
+  
+  return(c( RBE             = mean(results[,1]),
+            u.rel.RBE       = sd(results[,1]) / sqrt(N.runs) / mean(results[,1]),
+            D.biol.Gy       = mean(results[,2]),
+            u.rel.D.biol.Gy = sd(results[,2]) / sqrt(N.runs) / mean(results[,2]),
+            D.Gy            = mean(results[,3]),
+            u.rel.D.Gy      = sd(results[,3]) / sqrt(N.runs) / mean(results[,3])))
 }

@@ -23,7 +23,6 @@ setClass( Class            = "dataSPC",
 
 ################################
 # Constructor
-################################
 dataSPC <- function(file.name, spc.path = "."){
   res   <- SPC.read( file.name = file.path(spc.path,  
                                            file.name, 
@@ -42,8 +41,20 @@ dataSPC <- function(file.name, spc.path = "."){
   }
 
 ################################
-# Get spectrum
-################################
+# Get depth-dose
+depth.dose <- function(x){
+  DDD           <- SPC.tapply( x                    = x, 
+                               INDEX                = c("depth.g.cm2"), 
+                               FUN                  = AT.total.D.Gy, 
+                               additional.arguments = list(c("material.no", "AT.material.no.from.material.name('Water, Liquid')", FALSE),
+                                                           c("stopping.power.source.no", "2", FALSE)),
+                               names.results        = "D.Gy")
+
+  # Translate to ddd
+  conversion.factor <- 6.2415e9
+  DDD$D.Gy          <- DDD$D.Gy * conversion.factor
+  return(DDD)
+}
 
 #####################################
 # R function for reading of spc files 
@@ -297,4 +308,89 @@ SPC.read <- function( file.name,
                peak.position.g.cm2 = peak.position.g.cm2))
 }
 
-
+#############################
+# tapply version for spectra
+#############################
+SPC.tapply <- function( x, 
+                        INDEX, 
+                        FUN, 
+                        mixed.field.arguments = list(E.MeV.u     = "E.mid.MeV.u", 
+                                                     fluence.cm2 = "N.per.primary", 
+                                                     particle.no = "particle.no"),
+                        additional.arguments = NULL, 
+                        names.results        = NULL)
+{    
+  # Get index columns and levels
+  index.columns    <- which(is.element(names(x@spectra), INDEX))
+  if(length(INDEX) != length(index.columns)){
+    cat("At least one index variable not found in spc data.\n")
+    return(NULL)
+  }
+  
+  index.variable   <- NULL
+  for (i in 1:length(index.columns)){
+    # DEBUG: i <- 1
+    index.variable    <- paste(index.variable, x@spectra[,index.columns[i]])
+  }
+  levels           <- unique(index.variable)
+  
+  ###########################
+  # Get argument list for FUN
+  # Match with mixed field args
+  args.FUN         <- names(formals(FUN))
+  args.list        <- "("
+  for (i in 1:length(args.FUN)) {
+    mixed.field.arguments.idx <- match(args.FUN[i], names(mixed.field.arguments))
+    if (!is.na(mixed.field.arguments.idx)) {
+      args.list <- paste(	args.list, 
+                          args.FUN[i], " = x@spectra$", 
+                          mixed.field.arguments[[mixed.field.arguments.idx]], "[ii],", 
+                          sep = "")
+    }
+  }
+  
+  if(!is.null(additional.arguments)){
+    for(j in 1:length(additional.arguments)){
+      if(additional.arguments[[j]][3] == TRUE){
+        args.list    <- paste( args.list, 
+                               additional.arguments[[j]][1], 
+                               " = x@spectra$",
+                               additional.arguments[[j]][2],
+                               "[ii],",
+                               sep = "")
+      }else{
+        args.list    <- paste( args.list, 
+                               additional.arguments[[j]][1], 
+                               " = ",
+                               additional.arguments[[j]][2],
+                               ",",
+                               sep = "")
+      }
+    }
+  }
+  args.list        <- paste(substring(args.list, 1, nchar(args.list) - 1), ")")
+  
+  df.return        <- NULL
+  for(cur.level in levels){
+    # DEBUG: cur.level <- levels[2]
+    ii            <- index.variable == cur.level
+    
+    res           <- eval( parse( text = paste( "FUN",
+                                                args.list,
+                                                sep = "")))
+    df.cur.level  <-  cbind.data.frame( unique(data.frame( x@spectra[ii,index.columns])), 
+                                        res)
+    if(is.null(df.return)){
+      df.return    <- df.cur.level
+    }else{
+      df.return    <- rbind.data.frame( df.return,
+                                        df.cur.level)
+    }
+  }
+  row.names(df.return) <- 1:nrow(df.return)
+  names(df.return)[1:length(index.columns)]  <- INDEX
+  if(!is.null(names.results)){
+    names(df.return)     <- c(names(df.return)[1:length(index.columns)], names.results)
+  }
+  return(df.return)
+}

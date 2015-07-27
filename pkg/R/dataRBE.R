@@ -151,7 +151,7 @@ r.nucleus.um <- function(x){
 
 #  Computes the maximum slope of the X-ray dose-effect curve
 s.max  <- function(x){
-  return(alpha.X(x) + (2 * beta.X(x) * D.cut.Gy(x)) )
+  return( alpha.X(x) + (2 * beta.X(x) * D.cut.Gy(x)) )
 }
 
 
@@ -173,7 +173,7 @@ RBE.initial <- function(x, projectile, E.MeV.u){
   
   for(cur.projectile in unique(projectile)){
     # cur.projectile <- unique(projectile)[2]
-    ii        <- projectile == cur.projectile
+    ii        <- projectile       == cur.projectile
     jj        <- x@RBE$projectile == cur.projectile
     no.data   <- FALSE
     if(sum(jj) == 0){
