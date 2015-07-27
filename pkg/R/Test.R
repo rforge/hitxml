@@ -12,7 +12,8 @@ if(F){
   xyplot(D.Gy ~ depth.g.cm2,
          DDD)
 
-  for(i in 1:nrow(DDD)){
+  for(i in 1:(nrow(DDD)-1)){
+    # i <- 79
     tmp <- HX.RBE.LEM(RBE.data = dd,
                      Spectrum.data = dataSpectrum(ss, DDD$depth.g.cm2[i]),
                      dose.Gy = DDD$D.Gy[i])
@@ -21,5 +22,8 @@ if(F){
     cat("Did ", i, "\n")
   }
   
-  
+  xyplot(D.Gy + D.biol.Gy~ depth.g.cm2,
+         DDD)
+  xyplot(RBE~ depth.g.cm2,
+         DDD)
 }
