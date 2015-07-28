@@ -23,10 +23,9 @@ setClass( Class            = "dataSPC",
 
 ################################
 # Constructor
-dataSPC <- function(file.name, spc.path = "."){
-  res   <- SPC.read( file.name = file.path(spc.path,  
-                                           file.name, 
-                                           fsep = .Platform$file.sep))
+dataSPC <- function(file.name, endian = c("big", "little")[1]){
+  res   <- SPC.read( file.name = file.name,
+                     endian    = endian)
   # Replace target material name by libamtrack compatible
   if(res$target.material == "H2O"){
     res$target.material = "Water, Liquid"
