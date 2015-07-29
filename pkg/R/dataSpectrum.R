@@ -13,7 +13,7 @@ setClass( Class            = "dataSpectrum",
                                    target.material        = character(),
                                    peak.position.g.cm2    = numeric(),
                                    depth.g.cm2            = numeric(),
-                                   spectra                = data.frame(particle.no                 = integer(),
+                                   spectrum               = data.frame(particle.no                 = integer(),
                                                                        E.low.MeV.u                 = numeric(),
                                                                        E.mid.MeV.u                 = numeric(),
                                                                        E.high.MeV.u                = numeric(),
@@ -84,3 +84,24 @@ SPC.spectrum.at.depth.g.cm2 <- function(spc, depth.g.cm2, interpolate = TRUE)
     return(spc.before)
   }
 }
+
+######################
+# Method plot
+setMethod(f          = "plot", 
+          signature  = c("dataSpectrum"),
+          definition = function(x) {
+            
+            Z <- AT.Z.from.particle.no(x@spectrum$particle.no)$Z
+            lattice::xyplot(N.per.primary ~ E.mid.MeV.u,
+                            x@spectrum,
+                            type     = "S",
+                            grid     = TRUE,
+                            groups   = Z,
+                            ylab     = "particles / Gy",
+                            scales   = list(y = list(log = 10)),
+                            auto.key = list(title = "Z", 
+                                            space = "top", 
+                                            columns = max(Z), 
+                                            lines = TRUE, 
+                                            points = FALSE))
+          })

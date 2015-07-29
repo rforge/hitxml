@@ -309,7 +309,6 @@ SPC.read <- function( file.name,
 
 #############################
 # tapply version for spectra
-#############################
 SPC.tapply <- function( x, 
                         INDEX, 
                         FUN, 
@@ -393,3 +392,4 @@ SPC.tapply <- function( x,
   }
   return(df.return)
 }
+

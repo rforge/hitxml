@@ -68,9 +68,9 @@ get.spc <- function(SPC.set, beam.energy.MeV.u){
   spc.upper   <- dataSPC(file.name        = SPC.set@files[closest.idx[2]],
                          endian           = SPC.set@endian)
   
-  spc         <- AT.SPC.interpolate( spc.lower    = spc.lower,
-                                     spc.upper    = spc.upper,
-                                     energy.MeV.u = beam.energy.MeV.u)
+  spc         <- SPC.interpolate( spc.lower    = spc.lower,
+                                  spc.upper    = spc.upper,
+                                  energy.MeV.u = beam.energy.MeV.u)
   return(spc)
 }
 
@@ -86,19 +86,19 @@ SPC.interpolate <- function(spc.lower, spc.upper, energy.MeV.u){
   }
 
     # Copy structure
-  spc                    <- spc.lower
-  spc@energy.MeV.u       <- energy.MeV.u
+  spc                         <- spc.lower
+  spc@beam.energy.MeV.u       <- energy.MeV.u
   
   # Get relative difference of requested energy
-  frac                   <- (energy.MeV.u - spc.lower@energy.MeV.u) / (spc.upper@energy.MeV.u - spc.lower@energy.MeV.u)
+  frac                   <- (energy.MeV.u - spc.lower@beam.energy.MeV.u) / (spc.upper@beam.energy.MeV.u - spc.lower@beam.energy.MeV.u)
   
   # scale depth steps
   # TODO: should scales with E2 like range
-  spc@spectrum$depth.g.cm2    <- (1-frac) * spc.lower@spectrum$depth.g.cm2 + frac * spc.upper@spectrum$depth.g.cm2
+  spc@spectra$depth.g.cm2    <- (1-frac) * spc.lower@spectra$depth.g.cm2 + frac * spc.upper@spectra$depth.g.cm2
   
   # interpolate fluences
   # TODO: check if linear interpolation really applies
-  spc@spectrum$N.per.primary    <- (1-frac) * spc.lower@spectrum$N.per.primary + frac * spc.upper@spectrum$N.per.primary
+  spc@spectra$N.per.primary    <- (1-frac) * spc.lower@spectra$N.per.primary + frac * spc.upper@spectra$N.per.primary
   
   return(spc)
 }
