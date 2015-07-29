@@ -6,7 +6,7 @@
 # Grischa Klimpki, 2014
 # adapted to HIT_XML
 # package by Steffen
-# Greilich, 2015-07-15
+# Greilich, 2015-07
 ############################
 rm(list = ls())
 
@@ -14,10 +14,9 @@ library(HITXML)
 
 ###########################
 # define input parameters #
-###########################
 
 # path to spc and ddd data
-data.path <- "D:/04 - Risoe, DKFZ/03 - Methodik/11-20/20 - TRiP/04 - TRiP Basic Data/HIT/03 - TRiP98DATA_HIT-20131120/DDD/12C/RF3MM"
+ddd.path <- "D:/04 - Risoe, DKFZ/03 - Methodik/11-20/20 - TRiP/04 - TRiP Basic Data/HIT/03 - TRiP98DATA_HIT-20131120/DDD/12C/RF3MM"
 
 # minimal and maximal depth in cm
 min.depth         <- 10
@@ -26,40 +25,19 @@ max.depth         <- 15
 
 #############################
 # read in DDD files  
-#############################
 
-DDD.file.names   <- list.files(path = data.path, full.names=TRUE)
-split            <- strsplit(DDD.file.names, paste0(data.path, "/12C_E"))
-split            <- as.numeric(sapply(split, function(x) x <- sub("_rifi3mm_ddd_new.ddd", "", x[2])))
-DDD.file.names   <- DDD.file.names[order(split)]
-
-beam.energies    <- vector(mode="list", length=length(DDD.file.names))
-beam.energies    <- as.numeric(lapply(1:length(DDD.file.names), HX.read.beam.energy, file.names=DDD.file.names))
-
-BP.depth         <- vector(mode="list", length=length(DDD.file.names))
-BP.depth         <- as.numeric(lapply(1:length(DDD.file.names), HX.get.BP.depth, file.names=DDD.file.names))
-
-DDD.list         <- vector(mode="list", length=length(DDD.file.names))
-DDD.list         <- lapply(1:length(DDD.file.names), HX.read.DDD, file.names=DDD.file.names)
+ddds             <- dataDDDset(ddd.path = ddd.path)
 
 #############################
 # calculate the number of 
 # available IESs and equalize 
 # their maximum water depth
-#############################
-jj                <- which(BP.depth>min.depth & BP.depth<max.depth)
+jj                <- which(ddds@peak.positions.g.cm2 > min.depth & ddds@peak.positions.g.cm2 < max.depth)
 
-no.IES         <- length(jj)
-DDD.list.sub   <- DDD.list[jj]       
+no.IES            <- length(jj)
+ddds.sub          <- ddds[jj]
 
-for(n in 1:no.IES) {
-  
-  z.max <- min.depth + max.depth
-  nrow  <- nrow(DDD.list.sub[[n]])
-  DDD.list.sub[[n]][nrow+1,] <- c(z.max, 0, 0)
-  
-}
-
+z.max             <- min.depth + max.depth
 
 
 ##############
@@ -72,8 +50,11 @@ plateau.dose.Gy    <- 2
 z.max              <- round(z.max, digits=1)
 depth.seq          <- seq(from=0, to=z.max, by=z.max/resolution)
 
-min.depth.step     <- ceiling( DDD.list.sub[[1]]$z.cm[which.max(DDD.list.sub[[1]]$D.Gy)] / (z.max/resolution) )
-max.depth.step     <- floor( DDD.list.sub[[no.IES]]$z.cm[which.max(DDD.list.sub[[no.IES]]$D.Gy)] / (z.max/resolution) )
+min.depth.step     <- ceiling( head(sort(ddds.sub@peak.positions.g.cm2), 1) / (z.max/resolution) )
+max.depth.step     <- floor( tail(sort(ddds.sub@peak.positions.g.cm2), 1) / (z.max/resolution) )
+
+get.dose.Gy.from.set(ddds.sub, 5)
+
 
 primary.weights    <- abs(nlm(f=HX.deviation.proton, p=c(1:no.IES))$estimate)
 total.weights      <- round( primary.weights * plateau.dose.Gy / mean(HX.SOBP.dose(primary.weights)[min.depth.step:max.depth.step]), digits=0 )

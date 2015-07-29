@@ -50,6 +50,37 @@ get.ddd <- function(DDD.set, beam.energy.MeV.u){
   distance    <- abs(DDD.set@beam.energies.MeV.u - beam.energy.MeV.u)
   closest.idx <- which.min(distance)
   
-  cat("Closest energy available is", DDD.set@beam.energies.MeV.u[closest.idx], "MeV/u, returning this DDD.")
+  if(DDD.set@beam.energies.MeV.u[closest.idx] != beam.energy.MeV.u){
+    cat("Closest energy available is", DDD.set@beam.energies.MeV.u[closest.idx], "MeV/u, returning this DDD.\n")}
+  
   return(DDD.set@DDDs[[closest.idx]])
 }
+
+get.dose.Gy.from.set <- function(DDD.set, depths.g.cm2){
+  lapply( 1:length(DDD.set@beam.energies.MeV.u), 
+          function(x, y){ get.dose.Gy( get.ddd( y, 
+                                                y@beam.energies.MeV.u[x]), 
+                                       depths.g.cm2)},
+          DDD.set)
+}
+
+setMethod(f          = "[", 
+          signature  = "dataDDDset",
+          definition = function(x, i){
+            
+            # Check if binary image is given for masking
+            if(!missing(i)){
+              return(new("dataDDDset",
+                               projectiles          = x@projectiles[i],
+                               beam.energies.MeV.u  = x@beam.energies.MeV.u[i],
+                               target.materials     = x@target.materials[i],
+                               peak.positions.g.cm2 = x@peak.positions.g.cm2[i],
+                               densities.g.cm3      = x@densities.g.cm3[i],
+                               DDDs                 = x@DDDs[i]))
+            }else{
+                return(x)
+              }
+            }
+)
+
+          

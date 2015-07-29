@@ -75,6 +75,11 @@ dataDDD <- function(file.name){
       DDD                 = ddd)
 }
 
+get.dose.Gy <- function(DDD.data, depths.g.cm2){
+  return( approx(DDD.data@DDD$depth.g.cm2, DDD.data@DDD$dE.dz.MeV.cm2.g, xout = depths.g.cm2)$y *
+            DDD.data@density.g.cm3 * 1.6022e-10)
+}
+
 ######################
 # Method plot
 setMethod(f          = "plot", 
