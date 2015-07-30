@@ -76,8 +76,13 @@ dataDDD <- function(file.name){
 }
 
 get.dose.Gy <- function(DDD.data, depths.g.cm2){
-  return( approx(DDD.data@DDD$depth.g.cm2, DDD.data@DDD$dE.dz.MeV.cm2.g, xout = depths.g.cm2)$y *
-            DDD.data@density.g.cm3 * 1.6022e-10)
+  doses <- approx(DDD.data@DDD$depth.g.cm2, 
+                  DDD.data@DDD$dE.dz.MeV.cm2.g, 
+                  xout = depths.g.cm2)$y *
+           DDD.data@density.g.cm3 * 1.6022e-10
+  doses[is.na(doses)] <- 0.0
+  
+  return( doses )
 }
 
 ######################
@@ -100,4 +105,20 @@ setMethod(f          = "plot",
                                               " - peak at ",
                                               format(x@peak.position.g.cm2, digits = 3),
                                               " g/cm2"))
+          })
+
+setMethod(f          = "*", 
+          signature  = c("dataDDD", "numeric"),
+          definition = function(e1, e2) {
+          
+            new.ddd                  <- e1@DDD
+            new.ddd$dE.dz.MeV.cm2.g  <- new.ddd$dE.dz.MeV.cm2.g * e2
+            
+            new("dataDDD",
+                projectile          = e1@projectile,
+                beam.energy.MeV.u   = e1@beam.energy.MeV.u,
+                target.material     = e1@target.material,
+                density.g.cm3       = e1@density.g.cm3,
+                peak.position.g.cm2 = e1@peak.position.g.cm2,
+                DDD                 = new.ddd)
           })

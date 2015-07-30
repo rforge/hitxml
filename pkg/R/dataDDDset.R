@@ -30,7 +30,10 @@ dataDDDset <- function(pattern = "*.ddd", ddd.path = "."){
     densities.g.cm3        <- numeric()
     DDDs                   <- lapply(files, function(x){ cat("Reading", basename(x), "...\n")
                                                          dataDDD(x)})
-      
+    
+    energies               <- sapply(DDDs, function(x){x@beam.energy.MeV.u})
+    DDDs                   <- DDDs[order(energies)]
+    
     new("dataDDDset",
         projectiles          = sapply(DDDs, function(x){x@projectile}),
         beam.energies.MeV.u  = sapply(DDDs, function(x){x@beam.energy.MeV.u}),
@@ -56,12 +59,23 @@ get.ddd <- function(DDD.set, beam.energy.MeV.u){
   return(DDD.set@DDDs[[closest.idx]])
 }
 
-get.dose.Gy.from.set <- function(DDD.set, depths.g.cm2){
-  lapply( 1:length(DDD.set@beam.energies.MeV.u), 
-          function(x, y){ get.dose.Gy( get.ddd( y, 
-                                                y@beam.energies.MeV.u[x]), 
-                                       depths.g.cm2)},
-          DDD.set)
+get.dose.Gy.from.set <- function(DDD.set, depths.g.cm2, weights){
+  
+  n.ddd <- length(DDD.set@beam.energies.MeV.u)
+  
+  if (missing(weights)){
+    weights <- rep(1.0, n.ddd)
+  }
+  
+  doses     <- matrix( unlist( lapply( 1:n.ddd, 
+                                       function(i, x, y){ get.dose.Gy( get.ddd( x, 
+                                                                                x@beam.energies.MeV.u[i]), 
+                                                                        y)},
+                                       x = DDD.set,
+                                       y = depths.g.cm2)),
+                      nrow  = n.ddd,
+                      byrow = TRUE)
+  return(apply(weights * doses, 2, mean))
 }
 
 setMethod(f          = "[", 
