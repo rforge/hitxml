@@ -37,7 +37,7 @@ dataSPCset <- function(pattern = "*.spc", spc.path = ".", endian = "little"){
       beam.energies.MeV.u       <- c(beam.energies.MeV.u, tmp$energy.MeV.u)
       target.materials          <- c(target.materials, tmp$target.material)
       peak.positions.g.cm2      <- c(peak.positions.g.cm2, tmp$peak.position.g.cm2)
-      cat("Read ", basename(file), ".\n")
+      cat("Read header of", basename(file), "\n")
     }
 
     new("dataSPCset",
@@ -75,7 +75,7 @@ get.spc <- function(SPC.set, beam.energy.MeV.u){
 }
 
 SPC.interpolate <- function(spc.lower, spc.upper, energy.MeV.u){
-  if(length(unique(spc.lower@spectra$depth.step)) != length(unique(spc.upper@spectra$depth.step))){
+  if(length(unique(spc.lower@spectra[,"depth.g.cm2"])) != length(unique(spc.upper@spectra[,"depth.g.cm2"]))){
     # TODO: rescale spc with more steps to steps from spc with
     # TODO: fewer steps using AT.SPC.spectrum.at.depth.g.cm2
     stop("Cannot interpolate, different number of depth steps")
@@ -94,11 +94,32 @@ SPC.interpolate <- function(spc.lower, spc.upper, energy.MeV.u){
   
   # scale depth steps
   # TODO: should scales with E2 like range
-  spc@spectra$depth.g.cm2    <- (1-frac) * spc.lower@spectra$depth.g.cm2 + frac * spc.upper@spectra$depth.g.cm2
+  spc@spectra[,"depth.g.cm2"]    <- (1-frac) * spc.lower@spectra[,"depth.g.cm2"] + frac * spc.upper@spectra[,"depth.g.cm2"]
   
   # interpolate fluences
   # TODO: check if linear interpolation really applies
-  spc@spectra$N.per.primary    <- (1-frac) * spc.lower@spectra$N.per.primary + frac * spc.upper@spectra$N.per.primary
+  spc@spectra[,"N.per.primary"]    <- (1-frac) * spc.lower@spectra[,"N.per.primary"] + frac * spc.upper@spectra[,"N.per.primary"]
   
   return(spc)
 }
+
+setMethod(f          = "[", 
+          signature  = "dataSPCset",
+          definition = function(x, i){
+            
+            # Check if binary image is given for masking
+            if(!missing(i)){
+              return(new("dataSPCset",
+                         projectiles          = x@projectiles[i],
+                         beam.energies.MeV.u  = x@beam.energies.MeV.u[i],
+                         target.materials     = x@target.materials[i],
+                         peak.positions.g.cm2 = x@peak.positions.g.cm2[i],
+                         endian               = x@endian[i],
+                         files                = x@files[i]))
+            }else{
+              return(x)
+            }
+          }
+)
+
+

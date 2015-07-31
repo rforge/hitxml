@@ -1,3 +1,14 @@
+empty.spectra <- function(nrow){
+  return(matrix(nrow     = nrow,
+                ncol     = 6,
+                dimnames = list(NULL,
+                                c("depth.step",
+                                  "depth.g.cm2",
+                                  "particle.no",
+                                  "E.MeV.u",
+                                  "dE.MeV.u",
+                                  "N.per.primary"))))
+}
 ################################
 # dataSPC CLASS
 ################################
@@ -6,24 +17,22 @@ setClass( Class            = "dataSPC",
                                 beam.energy.MeV.u      = "numeric",
                                 target.material        = "character",
                                 peak.position.g.cm2    = "numeric",
-                                spectra                = "data.frame"),
+                                redistributed          = "logical",
+                                spectra                = "matrix"),
           prototype        = list( projectile             = character(),
                                    beam.energy.MeV.u      = numeric(),
                                    target.material        = character(),
                                    peak.position.g.cm2    = numeric(),
-                                   spectra                = data.frame(depth.step                  = integer(),
-                                                                       depth.g.cm2                 = numeric(),
-                                                                       particle.no                 = integer(),
-                                                                       E.low.MeV.u                 = numeric(),
-                                                                       E.mid.MeV.u                 = numeric(),
-                                                                       E.high.MeV.u                = numeric(),
-                                                                       dE.MeV.u                    = numeric(),
-                                                                       dN.dE.per.MeV.u.per.primary = numeric(),
-                                                                       N.per.primary               = numeric())) )
+                                   redistributed          = logical(),
+                                   spectra                = empty.spectra(0)))
+
 
 ################################
 # Constructor
-dataSPC <- function(file.name, endian = c("big", "little")[1]){
+dataSPC <- function(file.name, 
+                    endian       = c("big", "little")[1], 
+                    redistribute = TRUE,
+                    ...){
   res   <- SPC.read( file.name = file.name,
                      endian    = endian)
   # Replace target material name by libamtrack compatible
@@ -31,12 +40,19 @@ dataSPC <- function(file.name, endian = c("big", "little")[1]){
     res$target.material = "Water, Liquid"
   }
 
-  new("dataSPC",
-      projectile          = res$projectile,
-      beam.energy.MeV.u   = res$energy.MeV.u,
-      target.material     = res$target.material,
-      peak.position.g.cm2 = res$peak.position.g.cm2,
-      spectra             = res$spc)
+  spc           <- as.matrix(res$spc[,!(names(res$spc)%in%c("E.low.MeV.u", "E.high.MeV.u", "dN.dE.per.MeV.u.per.primary"))])
+
+  new.spc <- new( "dataSPC",
+                  projectile          = res$projectile,
+                  beam.energy.MeV.u   = res$energy.MeV.u,
+                  target.material     = res$target.material,
+                  peak.position.g.cm2 = res$peak.position.g.cm2,
+                  redistributed       = FALSE, 
+                  spectra             = spc)
+  if(redistribute){
+    new.spc <- redistribute.spc(new.spc, ...)}
+  
+  return(new.spc)
   }
 
 ################################
@@ -224,8 +240,7 @@ SPC.read <- function( file.name,
       mm[,10]      <- mm[,9] * mm[,8]         # convert fluence / binwidth -> fluence
       mm           <- mm[,-3]
       df           <- as.data.frame(mm)
-      names(df)    <- c("depth.step", "depth.g.cm2", "particle.no", "E.low.MeV.u", "E.mid.MeV.u", "E.high.MeV.u", "dE.MeV.u", "dN.dE.per.MeV.u.per.primary", "N.per.primary")
-      
+      names(df)    <- c("depth.step", "depth.g.cm2", "particle.no", "E.low.MeV.u", "E.MeV.u", "E.high.MeV.u", "dE.MeV.u", "dN.dE.per.MeV.u.per.primary", "N.per.primary")
       cat(paste("Read ", n.depth.steps, " depth steps for projectile ", projectile, " on ", target.material, " with ", beam.energy.MeV.u, " MeV/u and peak at ", peak.position.g.cm2, " g/cm2.\n", sep = ""))
     }else{
       df           <- NULL
@@ -393,3 +408,62 @@ SPC.tapply <- function( x,
   return(df.return)
 }
 
+
+redistribute.spc <- function(spc, E.min.MeV.u = 0, E.max.MeV.u = 600, dE.MeV.u = 1.0){
+  if(spc@redistributed == TRUE){
+    warning("spc is already redistributed.")
+    return(spc)
+  }
+  
+  particle.nos <- sort(unique(spc@spectra[,"particle.no"]))
+  if(any(!(particle.nos%in%c(1002,2004,3006,4008,5010,6012)))){
+    stop("SPC contains more than six canonical particles.")
+  }
+  
+  depth.steps  <- sort(unique(spc@spectra[,"depth.step"]))
+  
+  E.MeV.u      <- seq(E.min.MeV.u + dE.MeV.u/2, 
+                      E.max.MeV.u - dE.MeV.u/2,
+                      dE.MeV.u)
+  
+  cv                        <- paste(spc@spectra[,"depth.step"], spc@spectra[,"particle.no"])
+  n.E                       <- length(E.MeV.u)
+  
+  new.spectra               <- empty.spectra(n.E * length(particle.nos) * length(depth.steps))
+  
+  new.spectra[,"depth.step"]<- unlist( tapply( spc@spectra[,"depth.step"],
+                                               cv,
+                                               function(x, n){rep(unique(x), n)},
+                                               n = n.E))
+  new.spectra[,"depth.g.cm2"] <- unlist( tapply( spc@spectra[,"depth.g.cm2"],
+                                                                         cv,
+                                                                         function(x, n){rep(unique(x), n)},
+                                                                         n = n.E))
+  new.spectra[,"particle.no"] <-  unlist( tapply( spc@spectra[,"particle.no"],
+                                                                         cv,
+                                                                         function(x, n){rep(unique(x), n)},
+                                                                         n = n.E))
+  new.spectra[,"E.MeV.u"]     <-  unlist( tapply( spc@spectra[,"E.MeV.u"],
+                                                                         cv,
+                                                                         function(x, E){E},
+                                                                         E = E.MeV.u))
+  new.spectra[,"dE.MeV.u"]    <- dE.MeV.u
+  new.spectra[,"N.per.primary"] <-  unlist( by(   spc@spectra,
+                                                                         cv,
+                                                                         function(x, E, dE){
+                                                                           yy <- approx(x    = x[,"E.MeV.u"],
+                                                                                        y    = x[,"N.per.primary"] / x[,"dE.MeV.u"],
+                                                                                        xout = E)$y * dE
+                                                                           yy[is.na(yy)] <- 0.0
+                                                                           yy},
+                                                                         E = E.MeV.u,
+                                                                         dE = dE.MeV.u))
+  cat("spc redistributed with E.min", E.min.MeV.u, "MeV/u, E.max", E.max.MeV.u, "MeV/u and dE", dE.MeV.u, "\n")
+  return( new( "dataSPC",
+               projectile          = spc@projectile,
+               beam.energy.MeV.u   = spc@beam.energy.MeV.u,
+               target.material     = spc@target.material,
+               peak.position.g.cm2 = spc@peak.position.g.cm2,
+               redistributed       = TRUE, 
+               spectra             = new.spectra))
+}

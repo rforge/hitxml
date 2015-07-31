@@ -1,57 +1,52 @@
+empty.spectrum <- function(nrow){
+  return(matrix(nrow     = nrow,
+                ncol     = 4,
+                dimnames = list(NULL,
+                                c("particle.no",
+                                  "E.MeV.u",
+                                  "dE.MeV.u",
+                                  "N"))))
+}
 ################################
 # dataSpectrum CLASS
 ################################
 setClass( Class            = "dataSpectrum",
-          slots            = c( projectile             = "character",
-                                beam.energy.MeV.u      = "numeric",
-                                target.material        = "character",
-                                peak.position.g.cm2    = "numeric",
-                                depth.g.cm2            = "numeric",
-                                spectrum               = "data.frame"),
-          prototype        = list( projectile             = character(),
-                                   beam.energy.MeV.u      = numeric(),
-                                   target.material        = character(),
-                                   peak.position.g.cm2    = numeric(),
-                                   depth.g.cm2            = numeric(),
-                                   spectrum               = data.frame(particle.no                 = integer(),
-                                                                       E.low.MeV.u                 = numeric(),
-                                                                       E.mid.MeV.u                 = numeric(),
-                                                                       E.high.MeV.u                = numeric(),
-                                                                       dE.MeV.u                    = numeric(),
-                                                                       N.per.primary               = numeric())) )
+          slots            = c( depth.g.cm2            = "numeric",
+                                spectrum               = "matrix"),
+          prototype        = list( depth.g.cm2            = numeric(),
+                                   spectrum               = empty.spectrum(0)) )
 ################################
 # Constructor
 ################################
 dataSpectrum <- function(SPC.data, depth.g.cm2){
-  res   <- SPC.spectrum.at.depth.g.cm2(SPC.data@spectra, depth.g.cm2)
+  res   <- lapply(1:length(depth.g.cm2),
+                  function(i, s, d){
+                    new("dataSpectrum",
+                        depth.g.cm2         = d[i],
+                        spectrum            = spectrum.at.depth.g.cm2(s@spectra, d[i]))},
+                  s = SPC.data,
+                  d = depth.g.cm2)
     
-  new("dataSpectrum",
-      projectile          = SPC.data@projectile,
-      beam.energy.MeV.u   = SPC.data@beam.energy.MeV.u,
-      target.material     = SPC.data@target.material,
-      peak.position.g.cm2 = SPC.data@peak.position.g.cm2,
-      depth.g.cm2         = depth.g.cm2,
-      spectrum            = res)
 }
 
-particles.per.primary <- function(x){
-  return(sum(x@spectrum$N.per.primary))
+particles <- function(x){
+  return(sum(x@spectrum[,"N"]))
 }
 
-Mass.Stopping.Power.MeV.cm2.g <- function(x, stopping.power.source){
+Mass.Stopping.Power.MeV.cm2.g <- function(x, stopping.power.source, target.material){
   return(  AT.Mass.Stopping.Power( stopping.power.source,
-                                   x@spectrum$E.mid.MeV.u,
-                                   x@spectrum$particle.no,
-                                   AT.material.no.from.material.name(x@target.material))$stopping.power.MeV.cm2.g)
+                                   x@spectrum[,"E.MeV.u"],
+                                   x@spectrum[,"particle.no"],
+                                   AT.material.no.from.material.name(target.material))$stopping.power.MeV.cm2.g)
   
 }
 
-dose.per.primary <- function(x, stopping.power.source){
+dose.from.spectrum.Gy <- function(x, stopping.power.source, target.material){
   LET.MeV.cm            <- Mass.Stopping.Power.MeV.cm2.g(x, stopping.power.source)
   
-  density.g.cm3         <- AT.get.materials.data(AT.material.no.from.material.name(x@target.material))$density.g.cm3
+  density.g.cm3         <- AT.get.materials.data(AT.material.no.from.material.name(target.material))$density.g.cm3
   
-  return(sum(LET.MeV.cm * x@spectrum$N.per.primary) / density.g.cm3 * 1.60217657e-10)
+  return(sum(LET.MeV.cm * x@spectrum$N) / density.g.cm3 * 1.60217657e-10)
 }
 
 ###########################################
@@ -59,10 +54,11 @@ dose.per.primary <- function(x, stopping.power.source){
 # with depth, was in libamtrack
 # moved to HITXML Jul15, sgre
 ###########################################
-SPC.spectrum.at.depth.g.cm2 <- function(spc, depth.g.cm2, interpolate = TRUE)
+
+spectrum.at.depth.g.cm2 <- function(spectra, depth.g.cm2, interpolate = TRUE)
 {
-  depth.step.of.spc      <- unique(spc$depth.step)
-  depth.g.cm2.of.spc     <- unique(spc$depth.g.cm2)
+  depth.step.of.spc      <- unique(spectra[,"depth.step"])
+  depth.g.cm2.of.spc     <- unique(spectra[,"depth.g.cm2"])
   depth.step.interp      <- approx( x    = depth.g.cm2.of.spc,
                                     y    = depth.step.of.spc,
                                     xout = depth.g.cm2,
@@ -70,19 +66,18 @@ SPC.spectrum.at.depth.g.cm2 <- function(spc, depth.g.cm2, interpolate = TRUE)
   
   depth.step.int         <- floor(depth.step.interp)
   depth.step.frac        <- depth.step.interp - depth.step.int
-  spc.before             <- spc[spc$depth.step == depth.step.int,] 
+  spectrum.upstream      <- spectra[spectra[,"depth.step"] == depth.step.int,] 
+  spectrum.downstream    <- spectra[spectra[,"depth.step"] == (depth.step.int+1),]  
+  spectrum.interp                 <- empty.spectrum(nrow(spectrum.upstream))
+  spectrum.interp[,"E.MeV.u"]     <- spectrum.upstream[,"E.MeV.u"]
+  spectrum.interp[,"dE.MeV.u"]    <- spectrum.upstream[,"dE.MeV.u"]
+  spectrum.interp[,"particle.no"] <- spectrum.upstream[,"particle.no"]
   if(interpolate){
-    spc.after              <- spc[spc$depth.step == (depth.step.int+1),]  
-    
-    spc.interp             <- spc.before
-    spc.interp$depth.step  <- depth.step.interp
-    spc.interp$depth.g.cm2 <- depth.g.cm2
-    spc.interp$N.per.primary <- (1 - depth.step.frac) * spc.before$N.per.primary + depth.step.frac * spc.after$N.per.primary
-    
-    return(spc.interp)
+    spectrum.interp[,"N"]           <- (1 - depth.step.frac) * spectrum.upstream[,"N.per.primary"] + depth.step.frac * spectrum.downstream[,"N.per.primary"]
   }else{
-    return(spc.before)
+    spectrum.interp[,"N"]           <- spectrum.upstream[,"N.per.primary"]
   }
+  return(spectrum.interp)
 }
 
 ######################
@@ -91,9 +86,8 @@ setMethod(f          = "plot",
           signature  = c("dataSpectrum"),
           definition = function(x) {
             
-            Z <- AT.Z.from.particle.no(x@spectrum$particle.no)$Z
-            lattice::xyplot(N.per.primary ~ E.mid.MeV.u,
-                            x@spectrum,
+            Z <- AT.Z.from.particle.no(x@spectrum[,"particle.no"])$Z
+            lattice::xyplot(x@spectrum[,"N"] ~ x@spectrum[,"E.MeV.u"],
                             type     = "S",
                             grid     = TRUE,
                             groups   = Z,
@@ -104,4 +98,30 @@ setMethod(f          = "plot",
                                             columns = max(Z), 
                                             lines = TRUE, 
                                             points = FALSE))
+          })
+
+
+
+setMethod(f          = "+", 
+          signature  = c("dataSpectrum", "dataSpectrum"),
+          definition = function(e1, e2) {
+            
+          new.spectrum                <- e1@spectrum
+          new.spectrum[,"N"]          <- e1@spectrum[,"N"] + e2@spectrum[,"N"]
+              
+          return(new("dataSpectrum",
+                     depth.g.cm2         = e1@depth.g.cm2,
+                     spectrum            = new.spectrum))
+})
+
+setMethod(f          = "*", 
+          signature  = c("dataSpectrum", "numeric"),
+          definition = function(e1, e2) {
+            
+            new.spectrum                <- e1@spectrum
+            new.spectrum[,"N"]              <- new.spectrum[,"N"] * e2
+
+            new("dataSpectrum",
+                depth.g.cm2         = e1@depth.g.cm2,
+                spectrum            = new.spectrum)
           })
