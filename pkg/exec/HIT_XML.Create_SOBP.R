@@ -55,8 +55,10 @@ depths.g.cm2       <- seq( from       = min.depth.g.cm2,
                            by         = step.size.g.cm2)
 
 # Objective function: sum of squares of deviation to dose set
-mean.dose.Gy <- mean(get.dose.Gy.from.set(DDD.set      = ddds.sub, 
+dose.profile.Gy <- mean(get.dose.Gy.from.set(DDD.set      = ddds.sub, 
                                           depths.g.cm2 = depths.g.cm2))
+
+# dose.profile.Gy <- dose.profile.Gy * (2 - 0.5 * (1:length(depths.g.cm2)) / 17)
 
 dose.dev <- function(p, depths.g.cm2, DDD.set, dose.set.Gy){
   doses <- get.dose.Gy.from.set(DDD.set      = DDD.set, 
@@ -71,7 +73,7 @@ rel.weights       <- optim( fn             = dose.dev,
                             par            = rep( 1, no.IES),
                             depths.g.cm2   = depths.g.cm2,
                             DDD.set        = ddds.sub,
-                            dose.set.Gy    = mean.dose.Gy,
+                            dose.set.Gy    = dose.profile.Gy,
                             method         = "L-BFGS-B",
                             lower          = rep(0.0, no.IES),
 #                            upper          = rep(20, no.IES),

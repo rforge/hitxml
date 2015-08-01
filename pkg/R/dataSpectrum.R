@@ -1,4 +1,4 @@
-empty.spectrum <- function(nrow){
+spectrum <- function(nrow){
   return(matrix(nrow     = nrow,
                 ncol     = 4,
                 dimnames = list(NULL,
@@ -14,7 +14,7 @@ setClass( Class            = "dataSpectrum",
           slots            = c( depth.g.cm2            = "numeric",
                                 spectrum               = "matrix"),
           prototype        = list( depth.g.cm2            = numeric(),
-                                   spectrum               = empty.spectrum(0)) )
+                                   spectrum               = spectrum(0)) )
 ################################
 # Constructor
 ################################
@@ -29,7 +29,7 @@ dataSpectrum <- function(SPC.data, depth.g.cm2){
     
 }
 
-particles <- function(x){
+total.n.particles <- function(x){
   return(sum(x@spectrum[,"N"]))
 }
 
@@ -41,12 +41,19 @@ Mass.Stopping.Power.MeV.cm2.g <- function(x, stopping.power.source, target.mater
   
 }
 
-dose.from.spectrum.Gy <- function(x, stopping.power.source, target.material){
-  LET.MeV.cm            <- Mass.Stopping.Power.MeV.cm2.g(x, stopping.power.source)
-  
-  density.g.cm3         <- AT.get.materials.data(AT.material.no.from.material.name(target.material))$density.g.cm3
-  
-  return(sum(LET.MeV.cm * x@spectrum$N) / density.g.cm3 * 1.60217657e-10)
+dose.Gy <- function(x, stopping.power.source, target.material){
+  if(class(x) == "dataSpectrum"){
+    x <- list(x)
+  }
+    
+  density.g.cm3 <- AT.get.materials.data(AT.material.no.from.material.name(target.material))$density.g.cm3
+
+  return(sapply(x,
+                function(xx, s, t, d){ m <- Mass.Stopping.Power.MeV.cm2.g(xx, s, t)
+                                       sum(m * xx@spectrum[,"N"]) / d * 1.60217657e-10},
+                s = stopping.power.source,
+                t = target.material,
+                d = density.g.cm3))
 }
 
 ###########################################

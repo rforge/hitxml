@@ -1,6 +1,6 @@
 ############################
 # Script to generate an
-# SOBP
+# biologically opt. SOBP
 ############################
 # Original version by
 # Grischa Klimpki, 2014
@@ -19,6 +19,7 @@ library(HITXML)
 #ddd.path <- "D:/04 - Risoe, DKFZ/03 - Methodik/11-20/20 - TRiP/04 - TRiP Basic Data/HIT/03 - TRiP98DATA_HIT-20131120/DDD/p/RF0MM"
 ddd.path <- "D:/04 - Risoe, DKFZ/03 - Methodik/11-20/20 - TRiP/04 - TRiP Basic Data/HIT/03 - TRiP98DATA_HIT-20131120/DDD/12C/RF3MM"
 spc.path <- "D:/04 - Risoe, DKFZ/03 - Methodik/11-20/20 - TRiP/04 - TRiP Basic Data/HIT/03 - TRiP98DATA_HIT-20131120/SPC/12C/RF3MM"
+rbe.path <- "D:/04 - Risoe, DKFZ/03 - Methodik/11-20/20 - TRiP/04 - TRiP Basic Data/HIT/03 - TRiP98DATA_HIT-20131120/RBE"
 
 # minimal and maximal depth in cm
 min.depth.g.cm2         <- 10
@@ -63,7 +64,6 @@ depths.g.cm2       <- seq( from       = min.depth.g.cm2,
                            to         = max.depth.g.cm2, 
                            by         = step.size.g.cm2)
 
-weights           <- 1:no.IES
 spectra.at.depth  <- lapply(1:no.IES,
                             function(i, s, d){
                             cat("Getting spectra from IES", i, "\n")
@@ -71,30 +71,7 @@ spectra.at.depth  <- lapply(1:no.IES,
                             s = ddds.spc,
                             d = depths.g.cm2)
 # save(spectra.at.depth, file = "sad.rda")
-w.spectra.at.depth  <- lapply(1:no.IES,
-                              function(i, s, w){
-                                cat("Weighting spectra from IES", i, "\n")
-                                lapply(1:length(s[[i]]),
-                                       function(j, ss, ww){
-                                         ss[[j]] * ww[i]},
-                                       ss = s[[i]],
-                                       ww = w)},
-                              s = spectra.at.depth,
-                              w = weights)
-
-pp <- lapply(1:length(depths.g.cm2),
-             function(i, s, n, w){
-               cat("Adding spectra for depth", i, "\n")
-               ss <- s[[1]][[i]]
-               for(j in 2:n){
-                 ss <- ss + s[[j]][[i]]
-               }
-               ss},
-               s = spectra.at.depth,
-               n = no.IES)
-
-               plot(pp[[50]])
-               dose.from.spectrum.Gy(pp[[50]], stopping.power.source = "ICRU", target.material = "Water, Liquid")
+# load("sad.rda")
                
                
 # Objective function: sum of squares of deviation to dose set
@@ -122,6 +99,38 @@ rel.weights       <- optim( fn             = dose.dev,
                                                   maxit = 200))$par
 
 total.weights     <- rel.weights * plateau.dose.Gy / mean.dose.Gy / no.IES
+
+###############
+# bio
+w.spectra.at.depth  <- lapply(1:no.IES,
+                              function(i, s, w){
+                                cat("Weighting spectra from IES", i, "\n")
+                                lapply(1:length(s[[i]]),
+                                       function(j, ss, ww){
+                                         ss[[j]] * ww[i]},
+                                       ss = s[[i]],
+                                       ww = w)},
+                              s = spectra.at.depth,
+                              w = total.weights)
+
+pp <- lapply(1:length(depths.g.cm2),
+             function(i, s, n){
+               cat("Adding spectra for depth", i, "\n")
+               ss <- s[[1]][[i]]
+               for(j in 2:n){
+                 ss <- ss + s[[j]][[i]]
+               }
+               ss},
+             s = w.spectra.at.depth,
+             n = no.IES)
+
+dose.Gy(pp[[1]], stopping.power.source = "ICRU", target.material = "Water, Liquid")
+
+rbe.data <- dataRBE("target02.rbe", rbe.path)
+HX.RBE.LEM(rbe.data, pp[[10]], 2.0)
+plot(pp[[1]])
+xyplot(dose.Gy(pp, stopping.power.source = "ICRU", target.material = "Water, Liquid") ~ 1:51)
+
 
 ###############
 # save SOBP.dat

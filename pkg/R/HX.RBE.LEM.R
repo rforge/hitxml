@@ -28,8 +28,8 @@ HX.RBE.LEM <- function (RBE.data, Spectrum.data, dose.Gy, N.events = 100, N.runs
   c.1.cm2         <- 1.60217657e-10 / A.nucl.cm2
   
   # relative fluence (particle per primary particle)
-  fluence.spectrum <- particles.per.primary(Spectrum.data) 
-  dose.spectrum.Gy <- dose.per.primary(Spectrum.data, "PSTAR")
+  fluence.spectrum <- total.n.particles(Spectrum.data) 
+  dose.spectrum.Gy <- dose.Gy(Spectrum.data, "ICRU", "Water, Liquid")
 
   # fluence factor to get dose set
   fluence.factor   <- dose.Gy / dose.spectrum.Gy
@@ -38,7 +38,7 @@ HX.RBE.LEM <- function (RBE.data, Spectrum.data, dose.Gy, N.events = 100, N.runs
   N.hit.avg <- A.nucl.cm2 * fluence.spectrum * fluence.factor
   
   # Pre-compute stopping powers
-  S.MeV.cm2.g  <- Mass.Stopping.Power.MeV.cm2.g(Spectrum.data, "PSTAR")
+  S.MeV.cm2.g  <- Mass.Stopping.Power.MeV.cm2.g(Spectrum.data, "ICRU", "Water, Liquid")
 
   # index for faster particle sampling
   idx          <- 1:nrow(Spectrum.data@spectrum)
@@ -64,10 +64,10 @@ HX.RBE.LEM <- function (RBE.data, Spectrum.data, dose.Gy, N.events = 100, N.runs
   particles.idx <- sample(x       = idx,
                           size    = length(i),
                           replace = TRUE,
-                          prob    = Spectrum.data@spectrum$N.per.primary)
+                          prob    = Spectrum.data@spectrum[,"N"])
 
-  particle.no   <- Spectrum.data@spectrum$particle.no[particles.idx]
-  E.MeV.u       <- Spectrum.data@spectrum$E.mid.MeV.u[particles.idx]
+  particle.no   <- Spectrum.data@spectrum[,"particle.no"][particles.idx]
+  E.MeV.u       <- Spectrum.data@spectrum[,"E.MeV.u"][particles.idx]
   LET           <- S.MeV.cm2.g[particles.idx]
 
 

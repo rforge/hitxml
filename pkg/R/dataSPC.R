@@ -1,4 +1,4 @@
-empty.spectra <- function(nrow){
+spectra <- function(nrow){
   return(matrix(nrow     = nrow,
                 ncol     = 6,
                 dimnames = list(NULL,
@@ -9,9 +9,9 @@ empty.spectra <- function(nrow){
                                   "dE.MeV.u",
                                   "N.per.primary"))))
 }
+
 ################################
 # dataSPC CLASS
-################################
 setClass( Class            = "dataSPC",
           slots            = c( projectile             = "character",
                                 beam.energy.MeV.u      = "numeric",
@@ -24,7 +24,7 @@ setClass( Class            = "dataSPC",
                                    target.material        = character(),
                                    peak.position.g.cm2    = numeric(),
                                    redistributed          = logical(),
-                                   spectra                = empty.spectra(0)))
+                                   spectra                = spectra(0)))
 
 
 ################################
@@ -40,7 +40,9 @@ dataSPC <- function(file.name,
     res$target.material = "Water, Liquid"
   }
 
-  spc           <- as.matrix(res$spc[,!(names(res$spc)%in%c("E.low.MeV.u", "E.high.MeV.u", "dN.dE.per.MeV.u.per.primary"))])
+  spc           <- as.matrix(res$spc[,!(names(res$spc)%in%c("E.low.MeV.u", 
+                                                            "E.high.MeV.u", 
+                                                            "dN.dE.per.MeV.u.per.primary"))])
 
   new.spc <- new( "dataSPC",
                   projectile          = res$projectile,
@@ -429,7 +431,7 @@ redistribute.spc <- function(spc, E.min.MeV.u = 0, E.max.MeV.u = 600, dE.MeV.u =
   cv                        <- paste(spc@spectra[,"depth.step"], spc@spectra[,"particle.no"])
   n.E                       <- length(E.MeV.u)
   
-  new.spectra               <- empty.spectra(n.E * length(particle.nos) * length(depth.steps))
+  new.spectra               <- spectra(n.E * length(particle.nos) * length(depth.steps))
   
   new.spectra[,"depth.step"]<- unlist( tapply( spc@spectra[,"depth.step"],
                                                cv,
