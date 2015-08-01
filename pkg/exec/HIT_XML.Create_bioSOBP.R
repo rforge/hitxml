@@ -1,19 +1,15 @@
-############################
-# Script to generate an
-# biologically opt. SOBP
-############################
-# Original version by
-# Grischa Klimpki, 2014
-# adapted to HIT_XML
-# package by Steffen
-# Greilich, 2015-07
-############################
-rm(list = ls())
+#' Script to generate a spread-out Bragg peak
+#'
+#' Optimized either wrt physical or biological dose. 
+#' 
+#' Original version by Grischa Klimpki, 2014
+#' adapted to HIT_XML package and extended to 
+#' biological optization by Steffen Greilich, 2015-07
 
+rm(list = ls())
 library(HITXML)
 
-###########################
-# define input parameters #
+#' START OF USER INPUT
 
 # path to spc and ddd data
 ddd.path <- "D:/04 - Risoe, DKFZ/03 - Methodik/11-20/20 - TRiP/04 - TRiP Basic Data/HIT/03 - TRiP98DATA_HIT-20131120/DDD/12C/RF3MM"
@@ -37,36 +33,33 @@ write.SOBP              <- FALSE
 
 plot.range              <- 1.5
 
-#############################
+#' END OF USER INPUT
+
+
 # read in DDD files  
+ddds              <- dataDDDset(ddd.path = ddd.path)
 
-ddds             <- dataDDDset(ddd.path = ddd.path)
-
-
-#############################
-# calculate the number of 
-# available IESs and equalize 
-# their maximum water depth
+# get IESs necessary
 jj                <- ddds@peak.positions.g.cm2 >= min.depth.g.cm2 & ddds@peak.positions.g.cm2 <= max.depth.g.cm2 &
                              rep(c(TRUE, rep(FALSE, IES.step - 1)), length.out = length(ddds@projectiles))
 jj[head(which(jj), 1)-IES.step] <- TRUE
 jj[tail(which(jj), 1)+IES.step] <- TRUE
 no.IES            <- sum(jj)
-
 ddds.sub          <- ddds[which(jj)]
 
-###### model physical SOBP
+
+#' A. DO PHYSICAL OPTIMIZATION
 
 # Vector of depths covering the SOBP
 depths.g.cm2       <- seq( from       = min.depth.g.cm2, 
                            to         = max.depth.g.cm2, 
                            by         = step.size.g.cm2)
 
+# Get plateau per primary
+plateau.dose.per.primary.Gy <- mean(get.dose.Gy.from.set(DDD.set      = ddds.sub, 
+                                                         depths.g.cm2 = depths.g.cm2))
 
-# Objective function: sum of squares of deviation to dose set
-mean.dose.Gy <- mean(get.dose.Gy.from.set(DDD.set      = ddds.sub, 
-                                          depths.g.cm2 = depths.g.cm2))
-
+# Objective function: sum of squares (or higher) of deviation to dose set
 dose.dev <- function(p, depths.g.cm2, DDD.set, dose.set.Gy){
   doses <- get.dose.Gy.from.set(DDD.set      = DDD.set, 
                                 depths.g.cm2 = depths.g.cm2, 
@@ -80,23 +73,24 @@ rel.weights       <- optim( fn             = dose.dev,
                             par            = rep( 1, no.IES),
                             depths.g.cm2   = depths.g.cm2,
                             DDD.set        = ddds.sub,
-                            dose.set.Gy    = mean.dose.Gy,
+                            dose.set.Gy    = plateau.dose.per.primary.Gy,
                             method         = "L-BFGS-B",
                             lower          = rep(0.0, no.IES),
-#                            upper          = rep(20, no.IES),
                             control        = list(trace = TRUE, 
                                                   maxit = 200))$par
 
-total.weights     <- rel.weights * plateau.dose.Gy / mean.dose.Gy / no.IES
+# Scale number of primaries to get actual weights
+fluence.factor <- plateau.dose.Gy / plateau.dose.per.primary.Gy
+total.weights  <- rel.weights * fluence.factor
 
 ##########################
 # plot SOBP (single field) 
-pt.depths.g.cm2         <- seq( from       = 0.0, 
+plot.depths.g.cm2       <- seq( from       = 0.0, 
                                 to         = max(ddds.sub@peak.positions.g.cm2) * plot.range, 
                                 by         = step.size.g.cm2)
 
 plot.SOBP(ddds.sub, 
-          pt.depths.g.cm2, 
+          plot.depths.g.cm2, 
           total.weights, 
           "(phys.opt.)")
 
@@ -128,6 +122,7 @@ if(biol.optimization){
   # of lists (each length number of depths covering SOBP)
   # of dataSpectrum objects - representing the spectra
   # from the individual IESs (first index) contributing at specific depth (second index)
+  # TODO: Move this format to its own class and adapt lapply's below
   spectra.at.depth  <- lapply(1:no.IES,
                               function(i, s, d){
                                 cat("Getting spectra from IES", i, "\n")
@@ -176,28 +171,33 @@ if(biol.optimization){
     #        target.material = "Water, Liquid")
     D.phys.Gy             <- get.dose.Gy.from.set( DDD.set      = ddds.sub, 
                                                    depths.g.cm2 = depths.g.cm2, 
-                                                   weights      = total.weights)*no.IES
-    rbe      <- HX.RBE.LEM(rbe.data, eff.spectra.at.depth, D.phys.Gy)$RBE
+                                                   weights      = total.weights)
+    rbe                   <- HX.RBE.LEM(rbe.data, 
+                                        eff.spectra.at.depth, 
+                                        D.phys.Gy)$RBE
     
-    ## SECOND RUN: replace by functions!
-    mean.dose.Gy <- mean(get.dose.Gy.from.set(DDD.set      = ddds.sub, 
-                                              depths.g.cm2 = depths.g.cm2)) / rbe
-    
+    # Get current physical dose in plateau per Gy
+    plateau.dose.per.primary.Gy <- mean(get.dose.Gy.from.set(DDD.set      = ddds.sub, 
+                                                             depths.g.cm2 = depths.g.cm2))
+    # Scale down using RBE at all depth of SOBP
+    rbe.scaled.plateau.doses.per.primary.Gy <- plateau.dose.per.primary.Gy / rbe
+
     # minimize objective function to find weights
     rel.weights       <- optim( fn             = dose.dev, 
                                 par            = rep( 1, no.IES),
                                 depths.g.cm2   = depths.g.cm2,
                                 DDD.set        = ddds.sub,
-                                dose.set.Gy    = mean.dose.Gy,
+                                dose.set.Gy    = rbe.scaled.plateau.doses.per.primary.Gy,
                                 method         = "L-BFGS-B",
                                 lower          = rep(0.0, no.IES),
                                 control        = list(trace = TRUE, 
                                                       maxit = 200))$par
-    
-    total.weights     <- rel.weights * plateau.dose.Gy / mean(mean.dose.Gy * rbe)  / no.IES
+    # Scale number of primaries to get actual weights
+    fluence.factor <- plateau.dose.Gy / mean(plateau.dose.per.primary.Gy)
+    total.weights  <- rel.weights * fluence.factor
     
     plot(plot.SOBP(ddds.sub, 
-                   pt.depths.g.cm2, 
+                   plot.depths.g.cm2, 
                    total.weights, 
                    paste0("(biol.opt., step ", biol.opt.step, ")")))
   }
@@ -241,17 +241,17 @@ if(biol.optimization){
   
   D.phys.Gy             <- get.dose.Gy.from.set( DDD.set      = ddds.sub, 
                                                  depths.g.cm2 = bio.depths.g.cm2, 
-                                                 weights      = total.weights)*no.IES
+                                                 weights      = total.weights)
   
-  rbe      <- HX.RBE.LEM(rbe.data, eff.spectra.at.depth, D.phys.Gy)$RBE
+  rbe                   <- HX.RBE.LEM(rbe.data, eff.spectra.at.depth, D.phys.Gy)$RBE
 
-  df.plot <- data.frame( depth.g.cm2          = pt.depths.g.cm2,
+  df.plot <- data.frame( depth.g.cm2          = plot.depths.g.cm2,
                          D.phys.Gy            = get.dose.Gy.from.set( DDD.set      = ddds.sub, 
-                                                 depths.g.cm2 = pt.depths.g.cm2, 
-                                                 weights      = total.weights)*no.IES,
+                                                                      depths.g.cm2 = plot.depths.g.cm2, 
+                                                                      weights      = total.weights),
                          RBE                  = approx( x    = bio.depths.g.cm2,
                                                         y    = rbe,
-                                                        xout = pt.depths.g.cm2,
+                                                        xout = plot.depths.g.cm2,
                                                         rule = 2)$y)
   df.plot$D.biol.Gy <- df.plot$D.phys.Gy * df.plot$RBE
   
@@ -276,7 +276,7 @@ if(biol.optimization){
                                                 y = 0.5, 
                                                 rot = 90,
                                                 label = "RBE",
-                                                gp=gpar(cex = 1.5),
+                                                gp=gpar(cex = 1.5, col = "darkgreen"),
                                                 just = "center", 
                                                 default.units = "native", 
                                                 vp = viewport(xscale = c(0, 1), 

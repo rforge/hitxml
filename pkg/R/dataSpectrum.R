@@ -211,3 +211,4 @@ setMethod(f          = "*",
                 depth.g.cm2         = e1@depth.g.cm2,
                 spectrum            = new.spectrum)
           })
+

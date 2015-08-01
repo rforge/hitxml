@@ -3,7 +3,7 @@ plot.SOBP <- function(plot.ddds, plot.depths.g.cm2, plot.weights, add.comment){
   
   D.Gy                    <- get.dose.Gy.from.set( DDD.set      = plot.ddds, 
                                                    depths.g.cm2 = plot.depths.g.cm2, 
-                                                   weights      = plot.weights)*plot.no.IES
+                                                   weights      = plot.weights)
 
   dd                      <- unlist( lapply( 1:plot.no.IES,
                                              function(i){
@@ -24,6 +24,7 @@ plot.SOBP <- function(plot.ddds, plot.depths.g.cm2, plot.weights, add.comment){
          groups = which,
          xlab = list("distal depth /cm", cex=1.5),
          ylab = list("total dose / Gy", cex=1.5),
+         scale = list(cex = 1.25),
          main = list(paste0("SOBP (single field, ",
                             unique(ddds.sub@projectiles),
                             ") consisting of ", 

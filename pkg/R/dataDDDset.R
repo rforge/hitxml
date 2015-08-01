@@ -59,6 +59,7 @@ get.ddd <- function(DDD.set, beam.energy.MeV.u){
   return(DDD.set@DDDs[[closest.idx]])
 }
 
+
 get.dose.Gy.from.set <- function(DDD.set, depths.g.cm2, weights){
   
   n.ddd <- length(DDD.set@beam.energies.MeV.u)
@@ -73,9 +74,9 @@ get.dose.Gy.from.set <- function(DDD.set, depths.g.cm2, weights){
                                                                         y)},
                                        x = DDD.set,
                                        y = depths.g.cm2)),
-                      nrow  = n.ddd,
-                      byrow = TRUE)
-  return(apply(weights * doses, 2, mean))
+                       nrow  = n.ddd,
+                       byrow = TRUE)
+  return(apply(weights * doses, 2, sum))
 }
 
 setMethod(f          = "[", 
