@@ -2,8 +2,8 @@ Package: HITXML
 Type: Package
 Title: Planning tools for ion beam therapy
 Depends: XML, lattice, grid, libamtrack
-Version: 0.9.2
-Date: 2015-07-30
+Version: 0.9.3
+Date: 2015-08-01
 Author: Steffen Greilich using code by Sarah Stefanowicz, Grischa Klimpki, Tina Pfeiler and others
 Maintainer: Steffen Greilich <s.greilich@dkfz.de>
 Description: Code to create simple XML-based irradiation plans and forward-calculate plans or beam records. The functionality is consider to be used withs sscript distributed with this package (in /exec). The package is tailored to use with the scanning ion beam at the Heidelberg Ion-beam Therapy center (HIT) but might be useful for generic application as well. 
