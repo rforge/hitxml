@@ -25,27 +25,6 @@ setClass( Class            = "dataRBE",
 ################################
 dataRBE <- function(file.name, rbe.path = "."){
   
-  # Nested function to extract header items
-  read.item.numeric  <-  function(data, code){
-    line  <-	input[grep(code, data)]
-    if (!is.null(line)){
-      return(as.numeric(substring( line, regexpr(" ", line) + 1, nchar(line))))
-    }else{
-      return(0.0)
-    }
-  }
-  read.item.character  <-  function(data, code){
-    # returns string w/o leading or trailing whitespace
-    trim <- function (x) gsub("^\\s+|\\s+$", "", x)
-    
-    line  <-	input[grep(code, data)]
-    if (!is.null(line)){
-      return(trim(substring( line, regexpr(" ", line) + 1, nchar(line))))
-    }else{
-      return(0.0)
-    }
-  }
-
   input		<-	scan(file.path(rbe.path,  
                              file.name, 
                              fsep = .Platform$file.sep),

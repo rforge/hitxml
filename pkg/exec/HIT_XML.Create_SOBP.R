@@ -24,12 +24,12 @@ step.size.g.cm2         <- 0.1
 IES.step                <- 3
 plateau.dose.Gy         <- 2.0
 
-biol.optimization       <- FALSE
+biol.optimization       <- TRUE
 rbe.file                <- "target02.rbe"
 n.biol.opt.steps        <- 5
 bio.step.size.g.cm2     <- 0.25
 
-write.SOBP              <- FALSE
+write.SOBP              <- TRUE
 
 plot.range              <- 1.5
 

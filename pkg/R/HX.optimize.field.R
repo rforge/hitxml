@@ -14,15 +14,16 @@ HX.optimize.field <- function( par.start,
 	              fn             = HX.cost.function,
 	              gr             = NULL,
 	              field.shape    = field.shape,
-				  focus.FWHM.mm  = focus.FWHM.mm,
+				        focus.FWHM.mm  = focus.FWHM.mm,
 	              fluence.cm2    = fluence.cm2,
 	              field.par      = field.par,
 	              N.min          = N.min,
-				  resolution.mm  = resolution.mm,
-			      method         = "L-BFGS-B",
+				        resolution.mm  = resolution.mm,
+			          method         = "L-BFGS-B",
 	              lower          = 1,
 	              upper          = 2 * focus.FWHM.mm,
-			      control        = list( factr = 1e4 ))
+			          control        = list( factr = 1e3 ,
+			                                 reltol = 1e3))
 	
 	par             <- res$par
 	optim.field     <- HX.construct.field(field.shape                = field.shape,
