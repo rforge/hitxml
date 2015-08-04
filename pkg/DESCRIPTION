@@ -1,7 +1,7 @@
 Package: HITXML
 Type: Package
 Title: Planning tools for ion beam therapy
-Depends: XML, lattice, grid, libamtrack, digest
+Depends: XML, lattice, grid, libamtrack, digest, tidyr
 Version: 0.9.4
 Date: 2015-08-02
 Author: Steffen Greilich using code by Sarah Stefanowicz, Grischa Klimpki, Tina Pfeiler and others
