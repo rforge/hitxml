@@ -102,6 +102,7 @@ for(i in 1:n.IES){
 
 nodes.IES <- list()
 df.IES    <- NULL
+df.SOBP.feild <- NULL   # for SOBP.dat used in Fluka using the optimized field sized and spots
 
 # Open pdf for report
 pdf(paste0(name.exp.run, ".pdf"))
@@ -178,6 +179,20 @@ for(cur.IES in 1:n.IES){
                               n.spots       = nrow(optim.beam.spot.grid), # new field added to table (Yukihara, Oct. 2014)
                               part.spot     = optim.beam.spot.grid$N.particles[1] # new field added to table (Yukihara, Oct. 2014)
                   ))
+  
+  
+  df.SOBP.feild <- rbind(df.SOBP.feild,
+                       
+                       data.frame(
+                         E.GeV = rep(user.input$IES[[cur.IES]]$energy.value.MeV.u/1000,nrow(optim.beam.spot.grid)),
+                         x.cm=optim.beam.spot.grid$x.mm/10,
+                         y.cm=optim.beam.spot.grid$y.mm/10,
+                         FWHM.cm=rep(user.input$IES[[cur.IES]]$focus.FWHM.mm/10,nrow(optim.beam.spot.grid)),
+                         N.particles =optim.beam.spot.grid$N.particles
+                       )
+                       
+                       
+  )
 }
 
 row.names(df.IES) <- 1:nrow(df.IES)
@@ -469,6 +484,18 @@ cat("\nSaved plan file ",
     "\n",
     sep = "")
 }
+
+
+
+
+# saving the SOBP.dat version of the xml plan for FLUKA simulations
+
+write.table(df.SOBP.feild,
+            file = "SOBP-optimized.dat",
+            quote = FALSE,
+            row.names = FALSE,
+            col.names = FALSE,
+            eol       = "\r\n" )
 
 
 
