@@ -291,7 +291,8 @@ if(biol.optimization){
                             ") consisting of ", 
                             no.IES, 
                             " IESs "), 
-                     cex=1.5))
+                     cex=1.5),
+         sub  = "NB: HIT isocenter is at 0.289 g/cm2 depth!")
 }
 
 ###############

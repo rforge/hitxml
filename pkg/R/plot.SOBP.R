@@ -31,5 +31,6 @@ plot.SOBP <- function(plot.ddds, plot.depths.g.cm2, plot.weights, add.comment){
                             plot.no.IES, 
                             " IESs ",
                             add.comment), 
-                     cex=1.5))
+                     cex=1.5),
+         sub  = "NB: HIT isocenter is at 0.289 g/cm2 depth!")
 }
