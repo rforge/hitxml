@@ -6,7 +6,8 @@
 \usage{
 read.FLUKA.phase.space(path, pattern = "*_phase_space",
   particles = c("PROTON", "DEUTERON", "TRITON", "3-HELIUM", "4-HELIUM",
-  "HEAVYION"), remove.backscattered = TRUE, Z.max)
+  "HEAVYION"), remove.backscattered = TRUE, region.name.prefix = "TARGET",
+  Z.max)
 }
 \arguments{
 \item{path}{path containing the phase space data}

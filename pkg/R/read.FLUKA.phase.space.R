@@ -18,6 +18,7 @@ read.FLUKA.phase.space <- function(path,
                                                  "3-HELIUM", "4-HELIUM",
                                                  "HEAVYION"),
                                    remove.backscattered = TRUE,
+                                   region.name.prefix = "TARGET",
                                    Z.max) {
   file.list <- list.files(path,
                           pattern = pattern,
@@ -40,7 +41,7 @@ read.FLUKA.phase.space <- function(path,
   # Remove them (in a pretty stupid way)
   if (remove.backscattered) {
     ii <-
-      as.numeric(substring(df.raw$travel, 13, 13)) <  as.numeric(substring(df.raw$travel, 27, 27))
+      as.numeric(gsub(region.name.prefix, "", df.raw$OLDREG)) <  as.numeric(gsub(region.name.prefix, "", df.raw$NEWREG))
     cat(
       "Removing entries for backscattered particles (", sum(!ii), "of", nrow(df.raw), ")\n"
     )
