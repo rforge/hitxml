@@ -1,0 +1,290 @@
+#!/usr/local/flair/flair
+# FLUKA Project file
+Version: 2
+Title: sg74001 - General template for SPC generation
+Input: sg74000_GeneralSPC_template.inp
+Exec: sg74000
+Submit: *Default
+Tabs: 0.1 0.32 0.56 0.81 1.0
+Page: Viewer
+Source: mgdraw_sg74000.f
+DefMain: True
+LinkPrg: ldpm3qmd
+F77bound: True
+F77dline: False
+
+# Run information
+Run: <default>
+	Prev:     0
+	Last:     5
+	Status:   4
+	Pid:      0
+	StartRun: 1438773914
+	Family:  sg74000_GeneralSPC_template_aa sg74000_GeneralSPC_template_ab sg74000_GeneralSPC_template_ac sg74000_GeneralSPC_template_ad
+
+	# USRxxx data file: sg74000_GeneralSPC_template_21.bnn
+	Data: \I_\U.\e
+		Unit: 21
+		Type: b
+		Rule: +,\I\d\d\d_fort\.\U
+		Rule: +,\I\d\d\d_ftn\.\U
+		Rule: -,sg74000_GeneralSPC_template001_fort.21
+	End
+
+	# USRxxx data file: sg74000_GeneralSPC_template_22.bnn
+	Data: \I_\U.\e
+		Unit: 22
+		Type: b
+		Rule: +,\I\d\d\d_fort\.\U
+		Rule: +,\I\d\d\d_ftn\.\U
+	End
+End
+
+# Run information
+Run: sg74000_GeneralSPC_template_aa
+	Rnd:      1
+	Prev:     0
+	Last:     1
+	Status:   3
+	Pid:      0
+	StartRun: 1438934630
+	Parent:    <default>
+
+	# USRxxx data file: sg74000_GeneralSPC_template_aa_21.bnn
+	Data: \I_\U.\e
+		Unit: 21
+		Type: b
+		Rule: +,\I\d\d\d_fort\.\U
+		Rule: +,\I\d\d\d_ftn\.\U
+	End
+End
+
+# Run information
+Run: sg74000_GeneralSPC_template_ab
+	Rnd:      2
+	Prev:     0
+	Last:     5
+	Status:   4
+	Pid:      0
+	StartRun: 1438930643
+	Parent:    <default>
+
+	# USRxxx data file: sg74000_GeneralSPC_template_ab_21.bnn
+	Data: \I_\U.\e
+		Unit: 21
+		Type: b
+		Rule: +,\I\d\d\d_fort\.\U
+		Rule: +,\I\d\d\d_ftn\.\U
+	End
+End
+
+# Run information
+Run: sg74000_GeneralSPC_template_ac
+	Rnd:      3
+	Prev:     0
+	Last:     5
+	Status:   4
+	Pid:      0
+	StartRun: 1438930643
+	Parent:    <default>
+
+	# USRxxx data file: sg74000_GeneralSPC_template_ac_21.bnn
+	Data: \I_\U.\e
+		Unit: 21
+		Type: b
+		Rule: +,\I\d\d\d_fort\.\U
+		Rule: +,\I\d\d\d_ftn\.\U
+	End
+End
+
+# Run information
+Run: sg74000_GeneralSPC_template_ad
+	Rnd:      4
+	Prev:     0
+	Last:     5
+	Status:   4
+	Pid:      0
+	StartRun: 1438930643
+	Parent:    <default>
+
+	# USRxxx data file: sg74000_GeneralSPC_template_ad_21.bnn
+	Data: \I_\U.\e
+		Unit: 21
+		Type: b
+		Rule: +,\I\d\d\d_fort\.\U
+		Rule: +,\I\d\d\d_ftn\.\U
+	End
+End
+
+# Geometry Information
+Geometry:
+	Frame.bsplit: 0.5
+	Frame.tsplit: 0.5
+	Frame.vsplit: 0.5
+End
+
+# Pet
+Pet: pet
+End
+
+# Geometry plot "GeoViewer Red plot"
+Plot: Red
+	Format: .eps
+	Type:   Geometry
+	labels: 1
+	cbcolors: 0
+	title: GeoViewer Red plot
+	extends: 100 38.864
+	grid: 0
+	cbpalette: FLUKA
+	coord: X-Y
+	y2tics: 0
+	x2log: 0
+	index: 0
+	subtype: Material
+	y2log: 0
+	boundaries: 1
+	ztics: 0
+	cblog: 0
+	origin: 0 0 0
+	cbround: 0
+	ylog: 0
+	zlog: 0
+	cbtics: 0
+	layer: Media
+	cpd: 0
+	xlog: 0
+	basisu: 1 0 0
+	basisv: 0 1 0
+	x2tics: 0
+End
+
+# Geometry plot "GeoViewer Green plot"
+Plot: Green
+	Format: .eps
+	Type:   Geometry
+	origin: -20 0 1.017
+	layer: Media
+	title: GeoViewer Green plot
+	labels: 1
+	coord: Z-X
+	boundaries: 1
+	subtype: Material
+	extends: 8 3.10912
+	basisu: 0 0 1
+	basisv: 1 0 0
+End
+
+# Geometry plot "GeoViewer Blue plot"
+Plot: Blue
+	Format: .eps
+	Type:   Geometry
+	origin: 0 -0.02384 0.999391
+	layer: Media
+	title: GeoViewer Blue plot
+	labels: 1
+	coord: Z-Y
+	boundaries: 1
+	subtype: Material
+	extends: 2.17367 0.844775
+	basisu: 0 0 1
+	basisv: 0 1 0
+End
+
+# Geometry plot "GeoViewer Magenta plot"
+Plot: Magenta
+	Format: .eps
+	Type:   Geometry
+	origin: 0 0 0
+	layer: Media
+	title: GeoViewer Magenta plot
+	labels: 1
+	coord: X-Y
+	boundaries: 1
+	subtype: Material
+	extends: 57.8704 22.4907
+	basisu: -1 0 0
+	basisv: 0 1 0
+End
+
+# USRBIN plot "USRBIN sg74000 GeneralSPC template 21"
+Plot: sg74000_GeneralSPC_template_21_plot
+	Format: .eps
+	Type:   USRBIN
+	cbround: 0
+	int: 2.9180442924794212
+	cpd: 0
+	xlog: 0
+	ylog: 0
+	lw.0: 0
+	zlog: 0
+	cbcolors: 30
+	index: 0
+	errors: 0
+	title: USRBIN sg74000 GeneralSPC template 21
+	xrebin: 1
+	axes: Auto
+	y2log: 0
+	hist: 1D Projection
+	proj: Z
+	swap: 0
+	with.0: errorbars
+	zrebin: 1
+	max: 4.38364164E-04
+	grid: 0
+	cbtics: 1
+	x2tics: 0
+	yrebin: 1
+	geo: -Auto-
+	ps.0: 0
+	datafile: sg74000_GeneralSPC_template_21.bnn
+	y2tics: 0
+	min: 2.84633620E-06
+	det: 1
+	cbpalette: FLUKA
+	pt.0: 0
+	ztics: 0
+	x2log: 0
+	cblog: 1
+End
+
+# USRBIN plot "USRBIN sg74000 GeneralSPC template 22"
+Plot: sg74000_GeneralSPC_template_22_plot
+	Format: .eps
+	Type:   USRBIN
+	cbround: 0
+	int: 0.35352720666580056
+	cpd: 0
+	xlog: 0
+	ylog: 0
+	lw.0: 0
+	zlog: 0
+	cbcolors: 30
+	index: 0
+	errors: 0
+	title: USRBIN sg74000 GeneralSPC template 22
+	xrebin: 1
+	axes: Auto
+	y2log: 0
+	hist: 1D Projection
+	proj: Z
+	swap: 0
+	with.0: errorbars
+	zrebin: 1
+	max: 4.84605291E-04
+	grid: 0
+	cbtics: 1
+	x2tics: 0
+	yrebin: 1
+	geo: -Auto-
+	ps.0: 0
+	datafile: sg74000_GeneralSPC_template_22.bnn
+	y2tics: 0
+	min: 3.88758053E-05
+	det: 1
+	cbpalette: FLUKA
+	pt.0: 0
+	ztics: 0
+	x2log: 0
+	cblog: 1
+End

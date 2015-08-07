@@ -1,0 +1,217 @@
+#!/usr/local/flair/flair
+# FLUKA Project file
+Version: 2
+Title: SOBP phase space- using SOBP 10-15
+Input: sg73000.inp
+Exec: sg73000
+Submit: *Default
+Tabs: 0.1 0.32 0.56 0.81 1.0
+Page: Run
+Source: source_sg73000.f
+Source: mgdraw_sg73000.f
+DefMain: True
+LinkPrg: ldpm3qmd
+F77bound: True
+F77dline: False
+
+# Run information
+Run: <default>
+	Prev:     0
+	Last:     5
+	Status:   3
+	Pid:      0
+	StartRun: 0
+	Family:  sg73000_aa sg73000_ab sg73000_ac sg73000_ad
+
+	# USRxxx data file: sg73000_21.bnn
+	Data: \I_\U.\e
+		Unit: 21
+		Type: b
+		Rule: +,\I\d\d\d_fort\.\U
+		Rule: +,\I\d\d\d_ftn\.\U
+	End
+End
+
+# Run information
+Run: sg73000_aa
+	Rnd:      1
+	Prev:     0
+	Last:     5
+	Status:   3
+	Pid:      0
+	StartRun: 1437725209
+	Parent:    <default>
+
+	# USRxxx data file: sg73000_aa_21.bnn
+	Data: \I_\U.\e
+		Unit: 21
+		Type: b
+		Rule: +,\I\d\d\d_fort\.\U
+		Rule: +,\I\d\d\d_ftn\.\U
+	End
+End
+
+# Run information
+Run: sg73000_ab
+	Rnd:      2
+	Prev:     0
+	Last:     5
+	Status:   3
+	Pid:      0
+	StartRun: 1437725209
+	Parent:    <default>
+End
+
+# Run information
+Run: sg73000_ac
+	Rnd:      3
+	Prev:     0
+	Last:     5
+	Status:   3
+	Pid:      0
+	StartRun: 1437725209
+	Parent:    <default>
+End
+
+# Run information
+Run: sg73000_ad
+	Rnd:      4
+	Prev:     0
+	Last:     5
+	Status:   3
+	Pid:      0
+	StartRun: 1437725209
+	Parent:    <default>
+End
+
+# Geometry Information
+Geometry:
+	Frame.bsplit: 0.5
+	Frame.tsplit: 0.5
+	Frame.vsplit: 0.5
+End
+
+# Pet
+Pet: pet
+End
+
+# Geometry plot "GeoViewer Red plot"
+Plot: Red
+	Format: .eps
+	Type:   Geometry
+	labels: 1
+	cbcolors: 0
+	title: GeoViewer Red plot
+	extends: 100 75
+	grid: 0
+	cbpalette: FLUKA
+	coord: X-Y
+	x2log: 0
+	index: 0
+	subtype: Material
+	y2log: 0
+	boundaries: 1
+	ztics: 0
+	cblog: 0
+	origin: 0 0 0
+	cbround: 0
+	ylog: 0
+	zlog: 0
+	y2tics: 0
+	cbtics: 0
+	layer: Media
+	cpd: 0
+	xlog: 0
+	basisu: 1 0 0
+	basisv: 0 1 0
+	x2tics: 0
+End
+
+# Geometry plot "GeoViewer Green plot"
+Plot: Green
+	Format: .eps
+	Type:   Geometry
+	origin: 0 0 0
+	layer: Media
+	title: GeoViewer Green plot
+	labels: 1
+	coord: Z-X
+	boundaries: 1
+	subtype: Material
+	extends: 100 75
+	basisu: 0 0 1
+	basisv: 1 0 0
+End
+
+# Geometry plot "GeoViewer Blue plot"
+Plot: Blue
+	Format: .eps
+	Type:   Geometry
+	origin: 0 0 0
+	layer: Media
+	title: GeoViewer Blue plot
+	labels: 1
+	coord: Z-Y
+	boundaries: 1
+	subtype: Material
+	extends: 100 75
+	basisu: 0 0 1
+	basisv: 0 1 0
+End
+
+# Geometry plot "GeoViewer Magenta plot"
+Plot: Magenta
+	Format: .eps
+	Type:   Geometry
+	origin: 0 0 0
+	layer: Media
+	title: GeoViewer Magenta plot
+	labels: 1
+	coord: X-Y
+	boundaries: 1
+	subtype: Material
+	extends: 100 75
+	basisu: -1 0 0
+	basisv: 0 1 0
+End
+
+# USRBIN plot "USRBIN sg73000 21"
+Plot: sg73000_21_plot
+	Format: .eps
+	Type:   USRBIN
+	lw.0: 0
+	cbcolors: 30
+	title: USRBIN sg73000 21
+	swap: 0
+	grid: 0
+	geo: -Auto-
+	datafile: sg73000_21.bnn
+	cbpalette: FLUKA
+	x2log: 0
+	with.0: errorbars
+	index: 0
+	errors: 0
+	axes: Auto
+	y2log: 0
+	hist: 1D Projection
+	proj: Z
+	zrebin: 1
+	ztics: 0
+	cblog: 1
+	cbround: 0
+	ylog: 0
+	zlog: 0
+	xrebin: 1
+	ps.0: 0
+	yrebin: 1
+	y2tics: 0
+	cbtics: 1
+	det: 1
+	pt.0: 0
+	int: 2.6868486724533795
+	cpd: 0
+	xlog: 0
+	min: 1.43480593E-05
+	max: 7.81170209E-04
+	x2tics: 0
+End

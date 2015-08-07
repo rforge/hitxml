@@ -1,0 +1,44 @@
+TITLE
+sg74001 - Extract stopping powers for water
+* Set the defaults for precision simulations
+DEFAULTS                                                              HADROTHE
+* Define the beam characteristics
+* WARNING: Beam Energy/momentum per nucleon
+BEAM            -0.1                                                  HEAVYION
+#define Z 3
+* Ion Definition
+!@what.1=Z
+!@what.2=Z*2
+HI-PROPE          3.        6.
+* Define the beam position
+BEAMPOS          0.0       0.0       -1.
+GEOBEGIN                                                              COMBNAME
+    0    0          
+* Basic geometry: black body, void sphere and water tank
+SPH blkbody    0.0 0.0 0.0 20.0
+SPH void       0.0 0.0 0.0 15.0
+RPP target     -1. 1. -1. 1. 0. .1
+END
+* Basic geometry: black body, void sphere
+BLKBODY      5 +blkbody -void
+VOID         5 +void-target
+TARGET       5 +target
+END
+GEOEND
+COMPOUND         2.0  HYDROGEN       1.0    OXYGEN                    WATER
+IONTRANS    HEAVYION
+STERNHEI      3.5017      0.24    2.8004   0.09116    3.4773          WATER
+MAT-PROP                            76.8     WATER     WATER
+* ..+....1....+....2....+....3....+....4....+....5....+....6....+....7..
+ASSIGNMA    BLCKHOLE   BLKBODY
+ASSIGNMA         AIR      VOID
+ASSIGNMA       WATER    TARGET
+PHYSICS           2.                                                  EVAPORAT
+DELTARAY       0.001
+EMFCUT        -3E-05      3E-6              TARGET    TARGET
+USERDUMP        100.       99.       0.0       0.0                    dump
+* Set the random number seed
+RANDOMIZ         1.0
+* Set the number of primary histories to be simulated in the run
+START             1.
+STOP

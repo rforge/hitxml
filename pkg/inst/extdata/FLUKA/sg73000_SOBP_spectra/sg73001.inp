@@ -1,0 +1,478 @@
+TITLE
+sg73001 - Phase space at location of FNTD for Grischa's paper
+* Set the defaults for precision simulations
+DEFAULTS                                                              HADROTHE
+* Define the beam characteristics
+* WARNING: Beam Energy/momentum per nucleon
+BEAM        -0.27055                          -1.0      -1.0          HEAVYION
+* Ion Definition
+HI-PROPE          6.       12.
+* Define the beam position
+BEAMPOS          0.0       0.0     -105.
+GEOBEGIN                                                              COMBNAME
+    0    0          
+* Basic geometry: black body, void sphere and water tank
+SPH blkbody    0.0 0.0 0.0 200.0
+SPH void       0.0 0.0 0.0 150.0
+RPP target     -15. 15. -15. 15. 0.0 20.
+XYP plane1     1.0
+XYP plane2     8.0
+XYP plane3     11.0
+XYP plane4     13.1
+XYP plane5     14.0
+XYP plane6     17.0
+* BAMS (represented by water equivalent thickness)
+RPP bams       -15. 15. -15. 15. -101.189 -101.0
+* Ripple filter (Eduardo's implementation)
+RPP ripple     -15. 15. -5. 5. -100. -99.7
+RPP cell0      -15. 15. -5.0 -4.9 -100. -99.7
+RPP cell1      -15. 15. -4.9 -4.8 -100. -99.7
+RPP cell2      -15. 15. -4.8 -4.7 -100. -99.7
+RPP cell3      -15. 15. -4.7 -4.6 -100. -99.7
+RPP cell4      -15. 15. -4.6 -4.5 -100. -99.7
+RPP cell5      -15. 15. -4.5 -4.4 -100. -99.7
+RPP cell6      -15. 15. -4.4 -4.3 -100. -99.7
+RPP cell7      -15. 15. -4.3 -4.2 -100. -99.7
+RPP cell8      -15. 15. -4.2 -4.1 -100. -99.7
+RPP cell9      -15. 15. -4.1 -4.0 -100. -99.7
+RPP cell10     -15. 15. -4.0 -3.9 -100. -99.7
+RPP cell11     -15. 15. -3.9 -3.8 -100. -99.7
+RPP cell12     -15. 15. -3.8 -3.7 -100. -99.7
+RPP cell13     -15. 15. -3.7 -3.6 -100. -99.7
+RPP cell14     -15. 15. -3.6 -3.5 -100. -99.7
+RPP cell15     -15. 15. -3.5 -3.4 -100. -99.7
+RPP cell16     -15. 15. -3.4 -3.3 -100. -99.7
+RPP cell17     -15. 15. -3.3 -3.2 -100. -99.7
+RPP cell18     -15. 15. -3.2 -3.1 -100. -99.7
+RPP cell19     -15. 15. -3.1 -3.0 -100. -99.7
+RPP cell20     -15. 15. -3.0 -2.9 -100. -99.7
+RPP cell21     -15. 15. -2.9 -2.8 -100. -99.7
+RPP cell22     -15. 15. -2.8 -2.7 -100. -99.7
+RPP cell23     -15. 15. -2.7 -2.6 -100. -99.7
+RPP cell24     -15. 15. -2.6 -2.5 -100. -99.7
+RPP cell25     -15. 15. -2.5 -2.4 -100. -99.7
+RPP cell26     -15. 15. -2.4 -2.3 -100. -99.7
+RPP cell27     -15. 15. -2.3 -2.2 -100. -99.7
+RPP cell28     -15. 15. -2.2 -2.1 -100. -99.7
+RPP cell29     -15. 15. -2.1 -2.0 -100. -99.7
+RPP cell30     -15. 15. -2.0 -1.9 -100. -99.7
+RPP cell31     -15. 15. -1.9 -1.8 -100. -99.7
+RPP cell32     -15. 15. -1.8 -1.7 -100. -99.7
+RPP cell33     -15. 15. -1.7 -1.6 -100. -99.7
+RPP cell34     -15. 15. -1.6 -1.5 -100. -99.7
+RPP cell35     -15. 15. -1.5 -1.4 -100. -99.7
+RPP cell36     -15. 15. -1.4 -1.3 -100. -99.7
+RPP cell37     -15. 15. -1.3 -1.2 -100. -99.7
+RPP cell38     -15. 15. -1.2 -1.1 -100. -99.7
+RPP cell39     -15. 15. -1.1 -1.0 -100. -99.7
+RPP cell40     -15. 15. -1.0 -0.9 -100. -99.7
+RPP cell41     -15. 15. -0.9 -0.8 -100. -99.7
+RPP cell42     -15. 15. -0.8 -0.7 -100. -99.7
+RPP cell43     -15. 15. -0.7 -0.6 -100. -99.7
+RPP cell44     -15. 15. -0.6 -0.5 -100. -99.7
+RPP cell45     -15. 15. -0.5 -0.4 -100. -99.7
+RPP cell46     -15. 15. -0.4 -0.3 -100. -99.7
+RPP cell47     -15. 15. -0.3 -0.2 -100. -99.7
+RPP cell48     -15. 15. -0.2 -0.1 -100. -99.7
+RPP cell49     -15. 15. -0.1 0.0 -100. -99.7
+RPP cell50     -15. 15. 0.0 0.1 -100. -99.7
+RPP cell51     -15. 15. 0.1 0.2 -100. -99.7
+RPP cell52     -15. 15. 0.2 0.3 -100. -99.7
+RPP cell53     -15. 15. 0.3 0.4 -100. -99.7
+RPP cell54     -15. 15. 0.4 0.5 -100. -99.7
+RPP cell55     -15. 15. 0.5 0.6 -100. -99.7
+RPP cell56     -15. 15. 0.6 0.7 -100. -99.7
+RPP cell57     -15. 15. 0.7 0.8 -100. -99.7
+RPP cell58     -15. 15. 0.8 0.9 -100. -99.7
+RPP cell59     -15. 15. 0.9 1.0 -100. -99.7
+RPP cell60     -15. 15. 1.0 1.1 -100. -99.7
+RPP cell61     -15. 15. 1.1 1.2 -100. -99.7
+RPP cell62     -15. 15. 1.2 1.3 -100. -99.7
+RPP cell63     -15. 15. 1.3 1.4 -100. -99.7
+RPP cell64     -15. 15. 1.4 1.5 -100. -99.7
+RPP cell65     -15. 15. 1.5 1.6 -100. -99.7
+RPP cell66     -15. 15. 1.6 1.7 -100. -99.7
+RPP cell67     -15. 15. 1.7 1.8 -100. -99.7
+RPP cell68     -15. 15. 1.8 1.9 -100. -99.7
+RPP cell69     -15. 15. 1.9 2.0 -100. -99.7
+RPP cell70     -15. 15. 2.0 2.1 -100. -99.7
+RPP cell71     -15. 15. 2.1 2.2 -100. -99.7
+RPP cell72     -15. 15. 2.2 2.3 -100. -99.7
+RPP cell73     -15. 15. 2.3 2.4 -100. -99.7
+RPP cell74     -15. 15. 2.4 2.5 -100. -99.7
+RPP cell75     -15. 15. 2.5 2.6 -100. -99.7
+RPP cell76     -15. 15. 2.6 2.7 -100. -99.7
+RPP cell77     -15. 15. 2.7 2.8 -100. -99.7
+RPP cell78     -15. 15. 2.8 2.9 -100. -99.7
+RPP cell79     -15. 15. 2.9 3.0 -100. -99.7
+RPP cell80     -15. 15. 3.0 3.1 -100. -99.7
+RPP cell81     -15. 15. 3.1 3.2 -100. -99.7
+RPP cell82     -15. 15. 3.2 3.3 -100. -99.7
+RPP cell83     -15. 15. 3.3 3.4 -100. -99.7
+RPP cell84     -15. 15. 3.4 3.5 -100. -99.7
+RPP cell85     -15. 15. 3.5 3.6 -100. -99.7
+RPP cell86     -15. 15. 3.6 3.7 -100. -99.7
+RPP cell87     -15. 15. 3.7 3.8 -100. -99.7
+RPP cell88     -15. 15. 3.8 3.9 -100. -99.7
+RPP cell89     -15. 15. 3.9 4.0 -100. -99.7
+RPP cell90     -15. 15. 4.0 4.1 -100. -99.7
+RPP cell91     -15. 15. 4.1 4.2 -100. -99.7
+RPP cell92     -15. 15. 4.2 4.3 -100. -99.7
+RPP cell93     -15. 15. 4.3 4.4 -100. -99.7
+RPP cell94     -15. 15. 4.4 4.5 -100. -99.7
+RPP cell95     -15. 15. 4.5 4.6 -100. -99.7
+RPP cell96     -15. 15. 4.6 4.7 -100. -99.7
+RPP cell97     -15. 15. 4.7 4.8 -100. -99.7
+RPP cell98     -15. 15. 4.8 4.9 -100. -99.7
+RPP cell99     -15. 15. 4.9 5.0 -100. -99.7
+PLA plan0      0.0 -0.27 0.1 0.0 -5.0 -100.
+PLA plan1      0.0 -0.27 0.1 0.0 -4.9 -100.
+PLA plan2      0.0 -0.27 0.1 0.0 -4.8 -100.
+PLA plan3      0.0 -0.27 0.1 0.0 -4.7 -100.
+PLA plan4      0.0 -0.27 0.1 0.0 -4.6 -100.
+PLA plan5      0.0 -0.27 0.1 0.0 -4.5 -100.
+PLA plan6      0.0 -0.27 0.1 0.0 -4.4 -100.
+PLA plan7      0.0 -0.27 0.1 0.0 -4.3 -100.
+PLA plan8      0.0 -0.27 0.1 0.0 -4.2 -100.
+PLA plan9      0.0 -0.27 0.1 0.0 -4.1 -100.
+PLA plan10     0.0 -0.27 0.1 0.0 -4.0 -100.
+PLA plan11     0.0 -0.27 0.1 0.0 -3.9 -100.
+PLA plan12     0.0 -0.27 0.1 0.0 -3.8 -100.
+PLA plan13     0.0 -0.27 0.1 0.0 -3.7 -100.
+PLA plan14     0.0 -0.27 0.1 0.0 -3.6 -100.
+PLA plan15     0.0 -0.27 0.1 0.0 -3.5 -100.
+PLA plan16     0.0 -0.27 0.1 0.0 -3.4 -100.
+PLA plan17     0.0 -0.27 0.1 0.0 -3.3 -100.
+PLA plan18     0.0 -0.27 0.1 0.0 -3.2 -100.
+PLA plan19     0.0 -0.27 0.1 0.0 -3.1 -100.
+PLA plan20     0.0 -0.27 0.1 0.0 -3.0 -100.
+PLA plan21     0.0 -0.27 0.1 0.0 -2.9 -100.
+PLA plan22     0.0 -0.27 0.1 0.0 -2.8 -100.
+PLA plan23     0.0 -0.27 0.1 0.0 -2.7 -100.
+PLA plan24     0.0 -0.27 0.1 0.0 -2.6 -100.
+PLA plan25     0.0 -0.27 0.1 0.0 -2.5 -100.
+PLA plan26     0.0 -0.27 0.1 0.0 -2.4 -100.
+PLA plan27     0.0 -0.27 0.1 0.0 -2.3 -100.
+PLA plan28     0.0 -0.27 0.1 0.0 -2.2 -100.
+PLA plan29     0.0 -0.27 0.1 0.0 -2.1 -100.
+PLA plan30     0.0 -0.27 0.1 0.0 -2.0 -100.
+PLA plan31     0.0 -0.27 0.1 0.0 -1.9 -100.
+PLA plan32     0.0 -0.27 0.1 0.0 -1.8 -100.
+PLA plan33     0.0 -0.27 0.1 0.0 -1.7 -100.
+PLA plan34     0.0 -0.27 0.1 0.0 -1.6 -100.
+PLA plan35     0.0 -0.27 0.1 0.0 -1.5 -100.
+PLA plan36     0.0 -0.27 0.1 0.0 -1.4 -100.
+PLA plan37     0.0 -0.27 0.1 0.0 -1.3 -100.
+PLA plan38     0.0 -0.27 0.1 0.0 -1.2 -100.
+PLA plan39     0.0 -0.27 0.1 0.0 -1.1 -100.
+PLA plan40     0.0 -0.27 0.1 0.0 -1.0 -100.
+PLA plan41     0.0 -0.27 0.1 0.0 -0.9 -100.
+PLA plan42     0.0 -0.27 0.1 0.0 -0.8 -100.
+PLA plan43     0.0 -0.27 0.1 0.0 -0.7 -100.
+PLA plan44     0.0 -0.27 0.1 0.0 -0.6 -100.
+PLA plan45     0.0 -0.27 0.1 0.0 -0.5 -100.
+PLA plan46     0.0 -0.27 0.1 0.0 -0.4 -100.
+PLA plan47     0.0 -0.27 0.1 0.0 -0.3 -100.
+PLA plan48     0.0 -0.27 0.1 0.0 -0.2 -100.
+PLA plan49     0.0 -0.27 0.1 0.0 -0.1 -100.
+PLA plan50     0.0 -0.27 0.1 0.0 0.0 -100.
+PLA plan51     0.0 -0.27 0.1 0.0 0.1 -100.
+PLA plan52     0.0 -0.27 0.1 0.0 0.2 -100.
+PLA plan53     0.0 -0.27 0.1 0.0 0.3 -100.
+PLA plan54     0.0 -0.27 0.1 0.0 0.4 -100.
+PLA plan55     0.0 -0.27 0.1 0.0 0.5 -100.
+PLA plan56     0.0 -0.27 0.1 0.0 0.6 -100.
+PLA plan57     0.0 -0.27 0.1 0.0 0.7 -100.
+PLA plan58     0.0 -0.27 0.1 0.0 0.8 -100.
+PLA plan59     0.0 -0.27 0.1 0.0 0.9 -100.
+PLA plan60     0.0 -0.27 0.1 0.0 1.0 -100.
+PLA plan61     0.0 -0.27 0.1 0.0 1.1 -100.
+PLA plan62     0.0 -0.27 0.1 0.0 1.2 -100.
+PLA plan63     0.0 -0.27 0.1 0.0 1.3 -100.
+PLA plan64     0.0 -0.27 0.1 0.0 1.4 -100.
+PLA plan65     0.0 -0.27 0.1 0.0 1.5 -100.
+PLA plan66     0.0 -0.27 0.1 0.0 1.6 -100.
+PLA plan67     0.0 -0.27 0.1 0.0 1.7 -100.
+PLA plan68     0.0 -0.27 0.1 0.0 1.8 -100.
+PLA plan69     0.0 -0.27 0.1 0.0 1.9 -100.
+PLA plan70     0.0 -0.27 0.1 0.0 2.0 -100.
+PLA plan71     0.0 -0.27 0.1 0.0 2.1 -100.
+PLA plan72     0.0 -0.27 0.1 0.0 2.2 -100.
+PLA plan73     0.0 -0.27 0.1 0.0 2.3 -100.
+PLA plan74     0.0 -0.27 0.1 0.0 2.4 -100.
+PLA plan75     0.0 -0.27 0.1 0.0 2.5 -100.
+PLA plan76     0.0 -0.27 0.1 0.0 2.6 -100.
+PLA plan77     0.0 -0.27 0.1 0.0 2.7 -100.
+PLA plan78     0.0 -0.27 0.1 0.0 2.8 -100.
+PLA plan79     0.0 -0.27 0.1 0.0 2.9 -100.
+PLA plan80     0.0 -0.27 0.1 0.0 3.0 -100.
+PLA plan81     0.0 -0.27 0.1 0.0 3.1 -100.
+PLA plan82     0.0 -0.27 0.1 0.0 3.2 -100.
+PLA plan83     0.0 -0.27 0.1 0.0 3.3 -100.
+PLA plan84     0.0 -0.27 0.1 0.0 3.4 -100.
+PLA plan85     0.0 -0.27 0.1 0.0 3.5 -100.
+PLA plan86     0.0 -0.27 0.1 0.0 3.6 -100.
+PLA plan87     0.0 -0.27 0.1 0.0 3.7 -100.
+PLA plan88     0.0 -0.27 0.1 0.0 3.8 -100.
+PLA plan89     0.0 -0.27 0.1 0.0 3.9 -100.
+PLA plan90     0.0 -0.27 0.1 0.0 4.0 -100.
+PLA plan91     0.0 -0.27 0.1 0.0 4.1 -100.
+PLA plan92     0.0 -0.27 0.1 0.0 4.2 -100.
+PLA plan93     0.0 -0.27 0.1 0.0 4.3 -100.
+PLA plan94     0.0 -0.27 0.1 0.0 4.4 -100.
+PLA plan95     0.0 -0.27 0.1 0.0 4.5 -100.
+PLA plan96     0.0 -0.27 0.1 0.0 4.6 -100.
+PLA plan97     0.0 -0.27 0.1 0.0 4.7 -100.
+PLA plan98     0.0 -0.27 0.1 0.0 4.8 -100.
+PLA plan99     0.0 -0.27 0.1 0.0 4.9 -100.
+END
+* Basic geometry: black body, void sphere
+BLKBODY      5 +blkbody -void
+VOID         5 +void -target-bams -ripple
+* Bams
+BAMS         5 +bams
+* PMMA stopping material
+TARGET1      5 +target+plane1
+TARGET2      5 +target-plane1+plane2
+TARGET3      5 +target-plane2+plane3
+TARGET4      5 +target-plane3+plane4
+TARGET5      5 +target-plane4+plane5
+TARGET6      5 +target-plane5+plane6
+TARGET7      5 +target-plane6
+* Ripple filter
+CELL0        5 +cell0 -plan0
+CELL1        5 +cell1 -plan1
+CELL2        5 +cell2 -plan2
+CELL3        5 +cell3 -plan3
+CELL4        5 +cell4 -plan4
+CELL5        5 +cell5 -plan5
+CELL6        5 +cell6 -plan6
+CELL7        5 +cell7 -plan7
+CELL8        5 +cell8 -plan8
+CELL9        5 +cell9 -plan9
+CELL10       5 +cell10 -plan10
+CELL11       5 +cell11 -plan11
+CELL12       5 +cell12 -plan12
+CELL13       5 +cell13 -plan13
+CELL14       5 +cell14 -plan14
+CELL15       5 +cell15 -plan15
+CELL16       5 +cell16 -plan16
+CELL17       5 +cell17 -plan17
+CELL18       5 +cell18 -plan18
+CELL19       5 +cell19 -plan19
+CELL20       5 +cell20 -plan20
+CELL21       5 +cell21 -plan21
+CELL22       5 +cell22 -plan22
+CELL23       5 +cell23 -plan23
+CELL24       5 +cell24 -plan24
+CELL25       5 +cell25 -plan25
+CELL26       5 +cell26 -plan26
+CELL27       5 +cell27 -plan27
+CELL28       5 +cell28 -plan28
+CELL29       5 +cell29 -plan29
+CELL30       5 +cell30 -plan30
+CELL31       5 +cell31 -plan31
+CELL32       5 +cell32 -plan32
+CELL33       5 +cell33 -plan33
+CELL34       5 +cell34 -plan34
+CELL35       5 +cell35 -plan35
+CELL36       5 +cell36 -plan36
+CELL37       5 +cell37 -plan37
+CELL38       5 +cell38 -plan38
+CELL39       5 +cell39 -plan39
+CELL40       5 +cell40 -plan40
+CELL41       5 +cell41 -plan41
+CELL42       5 +cell42 -plan42
+CELL43       5 +cell43 -plan43
+CELL44       5 +cell44 -plan44
+CELL45       5 +cell45 -plan45
+CELL46       5 +cell46 -plan46
+CELL47       5 +cell47 -plan47
+CELL48       5 +cell48 -plan48
+CELL49       5 +cell49 -plan49
+CELL50       5 +cell50 -plan50
+CELL51       5 +cell51 -plan51
+CELL52       5 +cell52 -plan52
+CELL53       5 +cell53 -plan53
+CELL54       5 +cell54 -plan54
+CELL55       5 +cell55 -plan55
+CELL56       5 +cell56 -plan56
+CELL57       5 +cell57 -plan57
+CELL58       5 +cell58 -plan58
+CELL59       5 +cell59 -plan59
+CELL60       5 +cell60 -plan60
+CELL61       5 +cell61 -plan61
+CELL62       5 +cell62 -plan62
+CELL63       5 +cell63 -plan63
+CELL64       5 +cell64 -plan64
+CELL65       5 +cell65 -plan65
+CELL66       5 +cell66 -plan66
+CELL67       5 +cell67 -plan67
+CELL68       5 +cell68 -plan68
+CELL69       5 +cell69 -plan69
+CELL70       5 +cell70 -plan70
+CELL71       5 +cell71 -plan71
+CELL72       5 +cell72 -plan72
+CELL73       5 +cell73 -plan73
+CELL74       5 +cell74 -plan74
+CELL75       5 +cell75 -plan75
+CELL76       5 +cell76 -plan76
+CELL77       5 +cell77 -plan77
+CELL78       5 +cell78 -plan78
+CELL79       5 +cell79 -plan79
+CELL80       5 +cell80 -plan80
+CELL81       5 +cell81 -plan81
+CELL82       5 +cell82 -plan82
+CELL83       5 +cell83 -plan83
+CELL84       5 +cell84 -plan84
+CELL85       5 +cell85 -plan85
+CELL86       5 +cell86 -plan86
+CELL87       5 +cell87 -plan87
+CELL88       5 +cell88 -plan88
+CELL89       5 +cell89 -plan89
+CELL90       5 +cell90 -plan90
+CELL91       5 +cell91 -plan91
+CELL92       5 +cell92 -plan92
+CELL93       5 +cell93 -plan93
+CELL94       5 +cell94 -plan94
+CELL95       5 +cell95 -plan95
+CELL96       5 +cell96 -plan96
+CELL97       5 +cell97 -plan97
+CELL98       5 +cell98 -plan98
+CELL99       5 +cell99 -plan99
+ETCH0        5 +cell0 +plan0
+ETCH1        5 +cell1 +plan1
+ETCH2        5 +cell2 +plan2
+ETCH3        5 +cell3 +plan3
+ETCH4        5 +cell4 +plan4
+ETCH5        5 +cell5 +plan5
+ETCH6        5 +cell6 +plan6
+ETCH7        5 +cell7 +plan7
+ETCH8        5 +cell8 +plan8
+ETCH9        5 +cell9 +plan9
+ETCH10       5 +cell10 +plan10
+ETCH11       5 +cell11 +plan11
+ETCH12       5 +cell12 +plan12
+ETCH13       5 +cell13 +plan13
+ETCH14       5 +cell14 +plan14
+ETCH15       5 +cell15 +plan15
+ETCH16       5 +cell16 +plan16
+ETCH17       5 +cell17 +plan17
+ETCH18       5 +cell18 +plan18
+ETCH19       5 +cell19 +plan19
+ETCH20       5 +cell20 +plan20
+ETCH21       5 +cell21 +plan21
+ETCH22       5 +cell22 +plan22
+ETCH23       5 +cell23 +plan23
+ETCH24       5 +cell24 +plan24
+ETCH25       5 +cell25 +plan25
+ETCH26       5 +cell26 +plan26
+ETCH27       5 +cell27 +plan27
+ETCH28       5 +cell28 +plan28
+ETCH29       5 +cell29 +plan29
+ETCH30       5 +cell30 +plan30
+ETCH31       5 +cell31 +plan31
+ETCH32       5 +cell32 +plan32
+ETCH33       5 +cell33 +plan33
+ETCH34       5 +cell34 +plan34
+ETCH35       5 +cell35 +plan35
+ETCH36       5 +cell36 +plan36
+ETCH37       5 +cell37 +plan37
+ETCH38       5 +cell38 +plan38
+ETCH39       5 +cell39 +plan39
+ETCH40       5 +cell40 +plan40
+ETCH41       5 +cell41 +plan41
+ETCH42       5 +cell42 +plan42
+ETCH43       5 +cell43 +plan43
+ETCH44       5 +cell44 +plan44
+ETCH45       5 +cell45 +plan45
+ETCH46       5 +cell46 +plan46
+ETCH47       5 +cell47 +plan47
+ETCH48       5 +cell48 +plan48
+ETCH49       5 +cell49 +plan49
+ETCH50       5 +cell50 +plan50
+ETCH51       5 +cell51 +plan51
+ETCH52       5 +cell52 +plan52
+ETCH53       5 +cell53 +plan53
+ETCH54       5 +cell54 +plan54
+ETCH55       5 +cell55 +plan55
+ETCH56       5 +cell56 +plan56
+ETCH57       5 +cell57 +plan57
+ETCH58       5 +cell58 +plan58
+ETCH59       5 +cell59 +plan59
+ETCH60       5 +cell60 +plan60
+ETCH61       5 +cell61 +plan61
+ETCH62       5 +cell62 +plan62
+ETCH63       5 +cell63 +plan63
+ETCH64       5 +cell64 +plan64
+ETCH65       5 +cell65 +plan65
+ETCH66       5 +cell66 +plan66
+ETCH67       5 +cell67 +plan67
+ETCH68       5 +cell68 +plan68
+ETCH69       5 +cell69 +plan69
+ETCH70       5 +cell70 +plan70
+ETCH71       5 +cell71 +plan71
+ETCH72       5 +cell72 +plan72
+ETCH73       5 +cell73 +plan73
+ETCH74       5 +cell74 +plan74
+ETCH75       5 +cell75 +plan75
+ETCH76       5 +cell76 +plan76
+ETCH77       5 +cell77 +plan77
+ETCH78       5 +cell78 +plan78
+ETCH79       5 +cell79 +plan79
+ETCH80       5 +cell80 +plan80
+ETCH81       5 +cell81 +plan81
+ETCH82       5 +cell82 +plan82
+ETCH83       5 +cell83 +plan83
+ETCH84       5 +cell84 +plan84
+ETCH85       5 +cell85 +plan85
+ETCH86       5 +cell86 +plan86
+ETCH87       5 +cell87 +plan87
+ETCH88       5 +cell88 +plan88
+ETCH89       5 +cell89 +plan89
+ETCH90       5 +cell90 +plan90
+ETCH91       5 +cell91 +plan91
+ETCH92       5 +cell92 +plan92
+ETCH93       5 +cell93 +plan93
+ETCH94       5 +cell94 +plan94
+ETCH95       5 +cell95 +plan95
+ETCH96       5 +cell96 +plan96
+ETCH97       5 +cell97 +plan97
+ETCH98       5 +cell98 +plan98
+ETCH99       5 +cell99 +plan99
+END
+GEOEND
+COMPOUND         2.0  HYDROGEN       1.0    OXYGEN                    WATER
+IONTRANS    HEAVYION
+STERNHEI      3.5017      0.24    2.8004   0.09116    3.4773          WATER
+MAT-PROP                            76.8     WATER     WATER
+* ..+....1....+....2....+....3....+....4....+....5....+....6....+....7..
+ASSIGNMA    BLCKHOLE   BLKBODY
+ASSIGNMA         AIR      VOID
+* Bams
+ASSIGNMA       WATER      BAMS
+* Ripple filter
+ASSIGNMA         AIR     CELL0    CELL99
+ASSIGNMA         AIR     ETCH0    ETCH99
+ASSIGNMA       WATER   TARGET1
+ASSIGNMA       WATER   TARGET2
+ASSIGNMA       WATER   TARGET3
+ASSIGNMA       WATER   TARGET4
+ASSIGNMA       WATER   TARGET5
+ASSIGNMA       WATER   TARGET6
+ASSIGNMA       WATER   TARGET7
+PHYSICS           2.                                                  EVAPORAT
+DELTARAY       0.001
+EMFCUT        -3E-05      3E-6             TARGET1   TARGET2
+USRBIN           10.      DOSE      -21.       15.       15.       20.DOSEGRID
+USRBIN          -15.      -15.       0.0        1.        1.     2000. &
+AUXSCORE      USRBIN  -601200.            FLUGRIDC  FLUGRIDC
+USRBIN           10.  ALL-PART      -21.       15.       15.       20.FLUGRIDC
+USRBIN          -15.      -15.       0.0        1.        1.     2000. &
+USERDUMP        100.       99.       0.0       0.0                    dump
+* Set the random number seed
+RANDOMIZ         1.0
+* Set the number of primary histories to be simulated in the run
+START          2500.
+STOP
+STOP
