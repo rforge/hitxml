@@ -1,4 +1,8 @@
-#include "HITXML.h"
+#include <stdlib.h>
+#include <stdio.h>
+#include <malloc.h>
+#include <math.h>
+#include <Rcpp.h>
 
 // TODO: Use OpenMP to speed up
 // TODO: Use SEXP rather than truely C objects
