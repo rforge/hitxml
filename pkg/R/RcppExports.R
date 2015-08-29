@@ -5,3 +5,7 @@ timesTwo <- function(x) {
     .Call('HITXML_timesTwo', PACKAGE = 'HITXML', x)
 }
 
+XML_add_spot_new <- function(pixel_x_mm, pixel_y_mm, spot_x_mm, spot_y_mm, focus_x_mm, focus_y_mm, particles) {
+    .Call('HITXML_XML_add_spot_new', PACKAGE = 'HITXML', pixel_x_mm, pixel_y_mm, spot_x_mm, spot_y_mm, focus_x_mm, focus_y_mm, particles)
+}
+

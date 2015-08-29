@@ -16,3 +16,20 @@ BEGIN_RCPP
     return __result;
 END_RCPP
 }
+// XML_add_spot_new
+double XML_add_spot_new(NumericVector pixel_x_mm, NumericVector pixel_y_mm, double spot_x_mm, double spot_y_mm, double focus_x_mm, double focus_y_mm, double particles);
+RcppExport SEXP HITXML_XML_add_spot_new(SEXP pixel_x_mmSEXP, SEXP pixel_y_mmSEXP, SEXP spot_x_mmSEXP, SEXP spot_y_mmSEXP, SEXP focus_x_mmSEXP, SEXP focus_y_mmSEXP, SEXP particlesSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject __result;
+    Rcpp::RNGScope __rngScope;
+    Rcpp::traits::input_parameter< NumericVector >::type pixel_x_mm(pixel_x_mmSEXP);
+    Rcpp::traits::input_parameter< NumericVector >::type pixel_y_mm(pixel_y_mmSEXP);
+    Rcpp::traits::input_parameter< double >::type spot_x_mm(spot_x_mmSEXP);
+    Rcpp::traits::input_parameter< double >::type spot_y_mm(spot_y_mmSEXP);
+    Rcpp::traits::input_parameter< double >::type focus_x_mm(focus_x_mmSEXP);
+    Rcpp::traits::input_parameter< double >::type focus_y_mm(focus_y_mmSEXP);
+    Rcpp::traits::input_parameter< double >::type particles(particlesSEXP);
+    __result = Rcpp::wrap(XML_add_spot_new(pixel_x_mm, pixel_y_mm, spot_x_mm, spot_y_mm, focus_x_mm, focus_y_mm, particles));
+    return __result;
+END_RCPP
+}
