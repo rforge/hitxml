@@ -1,4 +1,4 @@
-#' Uses weights from SOBP script to creat HIT plan
+#' Uses weights from SOBP script to create HIT plan
 #' Started 2015-08-01, SG
 
 rm(list =ls())
@@ -9,8 +9,8 @@ library(HITXML)
 SIS.path           <- "D:/04 - Risoe, DKFZ/03 - Methodik/11-20/20 - TRiP/04 - TRiP Basic Data/HIT/03 - TRiP98DATA_HIT-20131120/SIS"
 SIS.file           <- "12C_1.6.2008.sis"
 
-SOBP.path          <- "."
-SOBP.file          <- "SOBP.dat"
+SOBP.file          <- system.file("extdata", "FLUKA", "sg73000_SOBP_spectra", "SOBP_sg73000.dat", package = "HITXML")
+
 particle.name      <- "12C"
 
 name.exp.series    <- "SOBP"
@@ -82,7 +82,7 @@ SIS.data      <- dataSIS(file.name = SIS.file,
 
 
 # Read SOBP.dat and fill in parameters
-SOBP <- read.table( file.path(SOBP.path, SOBP.file),
+SOBP <- read.table( SOBP.file,
                     col.names = c("beam.energy.MeV.u", "V2", "V3", "V4", "fluence.cm2"))[,c(1,5)]
 SOBP$beam.energy.MeV.u <- SOBP$beam.energy.MeV.u * 1000
 

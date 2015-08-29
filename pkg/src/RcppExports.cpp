@@ -5,31 +5,15 @@
 
 using namespace Rcpp;
 
-// timesTwo
-NumericVector timesTwo(NumericVector x);
-RcppExport SEXP HITXML_timesTwo(SEXP xSEXP) {
+// XML_PBR_new
+NumericVector XML_PBR_new(DataFrame beam_spot_grid, NumericMatrix fluenceMatrix);
+RcppExport SEXP HITXML_XML_PBR_new(SEXP beam_spot_gridSEXP, SEXP fluenceMatrixSEXP) {
 BEGIN_RCPP
     Rcpp::RObject __result;
     Rcpp::RNGScope __rngScope;
-    Rcpp::traits::input_parameter< NumericVector >::type x(xSEXP);
-    __result = Rcpp::wrap(timesTwo(x));
-    return __result;
-END_RCPP
-}
-// XML_add_spot_new
-double XML_add_spot_new(NumericVector pixel_x_mm, NumericVector pixel_y_mm, double spot_x_mm, double spot_y_mm, double focus_x_mm, double focus_y_mm, double particles);
-RcppExport SEXP HITXML_XML_add_spot_new(SEXP pixel_x_mmSEXP, SEXP pixel_y_mmSEXP, SEXP spot_x_mmSEXP, SEXP spot_y_mmSEXP, SEXP focus_x_mmSEXP, SEXP focus_y_mmSEXP, SEXP particlesSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject __result;
-    Rcpp::RNGScope __rngScope;
-    Rcpp::traits::input_parameter< NumericVector >::type pixel_x_mm(pixel_x_mmSEXP);
-    Rcpp::traits::input_parameter< NumericVector >::type pixel_y_mm(pixel_y_mmSEXP);
-    Rcpp::traits::input_parameter< double >::type spot_x_mm(spot_x_mmSEXP);
-    Rcpp::traits::input_parameter< double >::type spot_y_mm(spot_y_mmSEXP);
-    Rcpp::traits::input_parameter< double >::type focus_x_mm(focus_x_mmSEXP);
-    Rcpp::traits::input_parameter< double >::type focus_y_mm(focus_y_mmSEXP);
-    Rcpp::traits::input_parameter< double >::type particles(particlesSEXP);
-    __result = Rcpp::wrap(XML_add_spot_new(pixel_x_mm, pixel_y_mm, spot_x_mm, spot_y_mm, focus_x_mm, focus_y_mm, particles));
+    Rcpp::traits::input_parameter< DataFrame >::type beam_spot_grid(beam_spot_gridSEXP);
+    Rcpp::traits::input_parameter< NumericMatrix >::type fluenceMatrix(fluenceMatrixSEXP);
+    __result = Rcpp::wrap(XML_PBR_new(beam_spot_grid, fluenceMatrix));
     return __result;
 END_RCPP
 }

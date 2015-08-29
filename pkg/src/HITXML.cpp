@@ -17,8 +17,8 @@ void XML_add_spot(const int* n,
 					double pixel_value[])
 
 	 {
-		double sigmaX_mm = *focus_x_mm / (2 * sqrt(2 * log(2)));
-		double sigmaY_mm = *focus_y_mm / (2 * sqrt(2 * log(2)));
+		double sigmaX_mm = * focus_x_mm / (2 * sqrt(2 * log(2)));
+		double sigmaY_mm = * focus_y_mm / (2 * sqrt(2 * log(2)));
 		double sigX = sigmaX_mm * sigmaX_mm;
 		double sigY = sigmaY_mm * sigmaY_mm;
 		double prefactor = *particles / (2 * M_PI * sigmaX_mm * sigmaY_mm);
