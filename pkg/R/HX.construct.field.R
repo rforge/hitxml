@@ -7,13 +7,13 @@ HX.construct.field <- function(field.shape,
     
     switch( match(field.shape, c("square", "circle")),
 	        beam.spot.grid <- HX.construct.field.square( d.mm                       = par[1], 
-		                                                 field.size.mm              = field.par[1],
-									                     focus.FWHM.mm              = focus.FWHM.mm),
+		                                                   field.size.mm              = field.par[1],
+									                                     focus.FWHM.mm              = focus.FWHM.mm),
 	        beam.spot.grid <- HX.construct.field.circle( r.step.mm                  = par[1], 
-		                                                 angular.step.mm            = par[2],
-	        											 field.size.mm              = field.par[1],
-	        											 r.min.mm                   = field.par[2],
-									                     focus.FWHM.mm              = focus.FWHM.mm),
+		                                                   angular.step.mm            = par[2],
+	        											                       field.size.mm              = field.par[1],
+	        											                       r.min.mm                   = field.par[2],
+									                                     focus.FWHM.mm              = focus.FWHM.mm),
             cat("wrong field shape!"))
     
     beam.spot.grid$focus.X.FWHM.mm <- focus.FWHM.mm
@@ -22,12 +22,12 @@ HX.construct.field <- function(field.shape,
     
     
     mean.fluence.mm2              <- 0
-	sd.fluence.mm2                <- 0
-	N.particles.total             <- 0
+  	sd.fluence.mm2                <- 0
+	  N.particles.total             <- 0
 
     # If given, compute field with given resolution and scale total fluence
     if( !is.null(compute.with.resolution.mm)){
-    	m                  <- HX.compute.field(beam.spot.grid = beam.spot.grid, 
+    	m                  <- HX.compute.field(  beam.spot.grid = beam.spot.grid, 
                                                resolution.mm  = compute.with.resolution.mm)
 		switch( match(field.shape, c("square", "circle")),
 				ii <- (m[,1] >= -field.par[1]/2) &

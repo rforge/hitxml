@@ -6,6 +6,7 @@
 
 // TODO: Use OpenMP to speed up
 // TODO: Use SEXP rather than truely C objects
+
 void XML_add_spot(const int* n,
 					const double pixel_x_mm[],
 					const double pixel_y_mm[],

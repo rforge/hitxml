@@ -1,20 +1,30 @@
-if(F){
-  rm(list = ls())
-
+rm(list = ls())
 library(HITXML)
+library(lattice)
 
-spc.path <- "D:/04 - Risoe, DKFZ/03 - Methodik/11-20/20 - TRiP/04 - TRiP Basic Data/HIT/03 - TRiP98DATA_HIT-20131120/SPC/12C/RF3MM"
+beam.spot.grid   <- HX.construct.field(field.shape = "square", 
+                                       par = 5, 
+                                       focus.FWHM.mm = 5.0, 
+                                       fluence.cm2 = 100, 
+                                       field.par = 100)$beam.spot.grid
 
-spc <- dataSPC(file.name = file.path(spc.path, "FLUKA_NEW3_12C.H2O.MeV27000.spc"), 
-               endian = "little",
-               redistribute = FALSE)
-sspc <- redistribute.spc(spc)
+a <- system.time(
+m <- HX.compute.field(beam.spot.grid, resolution.mm = .5, method = "new"))
+b <- system.time(
+n <- HX.compute.field(beam.spot.grid, resolution.mm = .5, method = "old"))
 
-s   <- dataSpectrum(spc, 10.0)
-ss  <- dataSpectrum(sspc, 10.0)
-
-plot(s[[1]])
-plot(ss[[1]])
+a
+b
 
 
-}
+levelplot(m[,3] ~ m[,1]*m[,2],
+          useRaster = TRUE,
+          aspect    = 1.0,
+          cuts      = 100,
+          col.regions = grey(0:100/100))
+levelplot(n[,3] ~ n[,1]*n[,2],
+          useRaster = TRUE,
+          aspect    = 1.0,
+          cuts      = 100,
+          col.regions = grey(0:100/100))
+
