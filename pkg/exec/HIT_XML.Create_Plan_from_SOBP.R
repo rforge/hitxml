@@ -10,7 +10,8 @@ SIS.path           <- "D:/04 - Risoe, DKFZ/03 - Methodik/11-20/20 - TRiP/04 - TR
 SIS.file           <- "12C_1.6.2008.sis"
 
 SOBP.file          <- system.file("extdata", "FLUKA", "sg73000_SOBP_spectra", "SOBP_sg73000.dat", package = "HITXML")
-
+fluence.scaling.factor <- 1.0 # Use if you want to change the fluence in a biologically optimized plan (as changing the
+                              # biological dose will not scale the phys. dose / fluence linearily)
 particle.name      <- "12C"
 
 name.exp.series    <- "SOBP"
@@ -94,7 +95,7 @@ for(i in 1:n.IES){
                                chosen.foc.idx         = focus.no,
                                focus.FWHM.mm          = get.focus.FWHM.mm(SIS.data, SOBP$beam.energy.MeV.u[i], focus.no),
                                field.shape.idx        = chosen.field.idx,
-                               fluence.cm2.or.dose.Gy = SOBP$fluence.cm2[i],
+                               fluence.cm2.or.dose.Gy = SOBP$fluence.cm2[i] * fluence.scaling.factor,
                                field.size.mm          = field.side.size.mm,
                                r.min.m                = 15.0)
                          

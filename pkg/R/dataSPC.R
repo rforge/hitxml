@@ -57,31 +57,31 @@ dataSPC <- function(file.name,
   return(new.spc)
   }
 
-dataSPC <- function(projectile, beam.energy.MeV.u, target.material,
-                    peak.position.g.cm2, depth.step, depth.g.cm2,
-                    particle.no, E.MeV.u, dE.MeV.u, N.per.primary){
-  return( new( "dataSPC",
-               projectile          = projectile,
-               beam.energy.MeV.u   = beam.energy.MeV.u,
-               target.material     = target.material,
-               peak.position.g.cm2 = peak.position.g.cm2,
-               redistributed       = FALSE, 
-               spectra             = matrix(data     = c(depth.step,
-                                                         depth.g.cm2,
-                                                         particle.no,
-                                                         E.MeV.u,
-                                                         dE.MeV.u,
-                                                         N.per.primary),
-                                            nrow     = length(depth.step),
-                                            ncol     = 6,
-                                            dimnames = list(NULL,
-                                                            c("depth.step",
-                                                              "depth.g.cm2",
-                                                              "particle.no",
-                                                              "E.MeV.u",
-                                                              "dE.MeV.u",
-                                                              "N.per.primary")))))
-}
+# dataSPC <- function(projectile, beam.energy.MeV.u, target.material,
+#                     peak.position.g.cm2, depth.step, depth.g.cm2,
+#                     particle.no, E.MeV.u, dE.MeV.u, N.per.primary){
+#   return( new( "dataSPC",
+#                projectile          = projectile,
+#                beam.energy.MeV.u   = beam.energy.MeV.u,
+#                target.material     = target.material,
+#                peak.position.g.cm2 = peak.position.g.cm2,
+#                redistributed       = FALSE, 
+#                spectra             = matrix(data     = c(depth.step,
+#                                                          depth.g.cm2,
+#                                                          particle.no,
+#                                                          E.MeV.u,
+#                                                          dE.MeV.u,
+#                                                          N.per.primary),
+#                                             nrow     = length(depth.step),
+#                                             ncol     = 6,
+#                                             dimnames = list(NULL,
+#                                                             c("depth.step",
+#                                                               "depth.g.cm2",
+#                                                               "particle.no",
+#                                                               "E.MeV.u",
+#                                                               "dE.MeV.u",
+#                                                               "N.per.primary")))))
+# }
 
 ################################
 # Get depth-dose

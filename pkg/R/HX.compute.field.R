@@ -44,7 +44,7 @@ HX.compute.field <- function( beam.spot.grid,
       
        m[,3] <- res$m.value
      }else{
-       m[,3] <- XML_PBR_new(beam.spot.grid, m)
+       # m[,3] <- XML_PBR_new(beam.spot.grid, m)
      }
      return(m)
 }
