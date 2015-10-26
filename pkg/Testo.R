@@ -9,9 +9,9 @@ beam.spot.grid   <- HX.construct.field(field.shape = "square",
                                        field.par = 100)$beam.spot.grid
 
 a <- system.time(
-m <- HX.compute.field(beam.spot.grid, resolution.mm = .5, method = "new"))
+m <- HX.compute.field(beam.spot.grid, resolution.mm = 1, method = "new"))
 b <- system.time(
-n <- HX.compute.field(beam.spot.grid, resolution.mm = .5, method = "old"))
+n <- HX.compute.field(beam.spot.grid, resolution.mm = 1, method = "old"))
 
 a
 b

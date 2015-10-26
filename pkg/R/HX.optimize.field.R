@@ -22,8 +22,7 @@ HX.optimize.field <- function( par.start,
 			          method         = "L-BFGS-B",
 	              lower          = 1,
 	              upper          = 2 * focus.FWHM.mm,
-			          control        = list( factr = 1e3 ,
-			                                 reltol = 1e3))
+			          control        = list( factr = 1e9))
 	
 	par             <- res$par
 	optim.field     <- HX.construct.field(field.shape                = field.shape,

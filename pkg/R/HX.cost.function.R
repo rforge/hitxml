@@ -1,18 +1,18 @@
 HX.cost.function <- function(field.shape,
                              par,
-							 focus.FWHM.mm, 
+							               focus.FWHM.mm, 
                              fluence.cm2, 
                              field.par,
-							 N.min,
-							 resolution.mm){
+							               N.min,
+							               resolution.mm){
 
 	# Construct field with current spot distance
 	cur.field <- HX.construct.field(   field.shape                = field.shape,
-                                       par                        = par, 
-                                       focus.FWHM.mm              = focus.FWHM.mm, 
-                                       fluence.cm2                = fluence.cm2, 
-                                       field.par                  = field.par,
-							           compute.with.resolution.mm = resolution.mm)
+                                     par                        = par, 
+                                     focus.FWHM.mm              = focus.FWHM.mm, 
+                                     fluence.cm2                = fluence.cm2, 
+                                     field.par                  = field.par,
+							                       compute.with.resolution.mm = resolution.mm)
     
 	# Compute fluence variance
     cost       <- cur.field$sd.fluence.mm2^2 

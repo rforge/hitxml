@@ -5,7 +5,7 @@ HX.construct.field <- function(field.shape,
                                field.par,
 							   compute.with.resolution.mm = NULL){
     
-    switch( match(field.shape, c("square", "circle")),
+    switch( match(field.shape, c("square", "circle", "shells")),
 	        beam.spot.grid <- HX.construct.field.square( d.mm                       = par[1], 
 		                                                   field.size.mm              = field.par[1],
 									                                     focus.FWHM.mm              = focus.FWHM.mm),
@@ -14,7 +14,10 @@ HX.construct.field <- function(field.shape,
 	        											                       field.size.mm              = field.par[1],
 	        											                       r.min.mm                   = field.par[2],
 									                                     focus.FWHM.mm              = focus.FWHM.mm),
-            cat("wrong field shape!"))
+	        beam.spot.grid <- HX.construct.field.shells( d.mm                       = par[1], 
+	                                                     field.size.mm              = field.par[1],
+	                                                     focus.FWHM.mm              = focus.FWHM.mm),
+	        cat("wrong field shape!"))
     
     beam.spot.grid$focus.X.FWHM.mm <- focus.FWHM.mm
     beam.spot.grid$focus.Y.FWHM.mm <- focus.FWHM.mm
@@ -29,13 +32,14 @@ HX.construct.field <- function(field.shape,
     if( !is.null(compute.with.resolution.mm)){
     	m                  <- HX.compute.field(  beam.spot.grid = beam.spot.grid, 
                                                resolution.mm  = compute.with.resolution.mm)
-		switch( match(field.shape, c("square", "circle")),
+		switch( match(field.shape, c("square", "circle", "shells")),
 				ii <- (m[,1] >= -field.par[1]/2) &
 				      (m[,1] <=  field.par[1]/2) &
 					  (m[,2] >= -field.par[1]/2) &
 					  (m[,2] <=  field.par[1]/2),
 				ii <- (sqrt(m[,1]^2+m[,2]^2) <= field.par[1] + field.par[2]) &
 				      (sqrt(m[,1]^2+m[,2]^2) >= field.par[2]),
+				ii <- TRUE,
 				cat("wrong field shape!"))
         mean.fluence.mm2              <- mean(m[ii,3])
         sd.fluence.mm2                <- sd(m[ii,3]) / mean.fluence.mm2

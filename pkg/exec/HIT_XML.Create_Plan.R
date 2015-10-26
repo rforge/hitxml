@@ -2,10 +2,11 @@
 
 ############################################
 # Script to create HIT irradiation plans for
-# simple (one IES), homogenous fields
+# simple, homogenous fields
 #
-# S. Greilich, S. Stefanowicz, Apr2012
-# DKFZ Heidelberg, s.greilich@dkfz.de
+# E0408, DKFZ Heidelberg
+# Oct2015
+# Maintainer: s.greilich@dkfz.de
 ############################################
 # Please see README for more information
 ############################################
@@ -43,10 +44,10 @@ program.date    <- packageDescription("HITXML")$Date
 # This approach allows to run the script interactively, too,
 # e.g. for debugging. Normal mode is non-interactively
 # by Rscript from command line.
-user.input <- list( basic = list( date             = 20120412,
-                                  name.exp.series  = "FNTD",
-                                  name.exp.run     = "sg1000",
-                                  chosen.particle  = 1,        # c("Protons", "Helium-3 ions", "Carbon ions", "Oxygen ions")
+user.input <- list( basic = list( date             = 20150831,
+                                  name.exp.series  = "SphereTest",
+                                  name.exp.run     = "st1",
+                                  chosen.particle  = 1,        # c("Protons", "Helium-4 ions", "Carbon ions", "Oxygen ions")
                                   chosen.rifi.idx  = 1,        # c("None", "3 mm")
                                   intensity        = 1,
                                   resolution.mm    = 2),
@@ -59,14 +60,22 @@ user.input <- list( basic = list( date             = 20120412,
                                   patient.sex      = "M",
                                   therapist.name   = "USER NAME"),
                     
-                    IES   = list( list( energy.value.MeV.u     = 221.05,     # CAREFUL: if given manually (i.e., not interactively) this value has to match EXACTLY the libC data
-                                        chosen.idx             = 255,
-                                        chosen.foc.idx         = 1,
-                                        focus.FWHM.mm          = 4.9,     # CAREFUL: if given manually (i.e., not interactively) this value has to match EXACTLY the libC data
-                                        field.shape.idx        = 1,      # c("square", "circular")
-                                        fluence.cm2.or.dose.Gy = -0.02,
+                    IES   = list( list( energy.value.MeV.u     = 221.05,     # value will be adjusted to closest available in libC
+                                        chosen.idx             = NULL,       # if given, overrides energy value
+                                        focus.FWHM.mm          = 0.0,        # value will be adjusted to closest available in libC
+                                        chosen.foc.idx         = 2,          # if given, overrides focus value
+                                        field.shape.idx        = 3,          # c("square", "circular", "shells")
+                                        fluence.cm2.or.dose.Gy = -1.0,
                                         field.size.mm          = 150,
-                                        r.min.mm               = 15)))
+                                        r.min.mm               = 0.0)))
+
+# Script run interactively or non-interactively, set connection accordingly
+interactive.run.mode <- interactive()
+if(!interactive.run.mode){
+  input.con <-file("stdin")
+}else{
+  input.con <-stdin()
+}
 
 # Read defaults
 default.input <- HX.read.defaults()
@@ -75,7 +84,7 @@ default.input <- HX.read.defaults()
 welcome.message <- paste( "\n",
 	 "#####################################################################\n",
 	 "#####################################################################\n",
-	 "## THIS IS HIT_XML\n## S. Stefanowicz, S. Greilich, DKFZ Heidelberg\n## Version ", 
+	 "## THIS IS HIT_XML\n## E0408, DKFZ Heidelberg\n## Version ", 
      program.version, 
 	 " as of ", 
 	 program.date,
@@ -83,23 +92,14 @@ welcome.message <- paste( "\n",
 	 "#####################################################################\n",
      sep = "")
 
-cat(welcome.message)
+message(welcome.message)
 
-# Script run interactively or non-interactively, set connection accordingly
-interactive.run.mode <- interactive()
-if(!interactive.run.mode){
-	input.con <-file("stdin")
-}else{
-  input.con <-stdin()
-}
-
-cat( "#####################################################################\n\n")
-
+message("#####################################################################\n\n")
 
 #################################
 ## Set up data frames for choices
 df.particles <- data.frame( particle.name      = c("PROTON", "ION", "ION", "ION"),
-                            nice.particle.name = c("Protons", "Helium-4 ions", "Carbon ions", "Oxygen ions"), 
+                            nice.particle.name = c("Protons", "Helium ions", "Carbon ions", "Oxygen ions"), 
                             mass               = c(1,4,12,16),
                             charge             = c(1,2,6,8),
                             atomicNumber       = c(1,2,6,8),
@@ -117,7 +117,7 @@ df.rippleFilter <- data.frame( filter.name      = c("None", "3mm"),
                                filter.code      = c(254, 3),
                                stringsAsFactors = FALSE)
 
-df.fields       <- data.frame( shape            = c( "square", "circle"),
+df.fields       <- data.frame( shape            = c( "square", "circle", "shells"),
                                stringsAaFactors = FALSE)
 
 # TODO: Add variables for field shape here
@@ -143,7 +143,7 @@ rippleFilter        <- df.rippleFilter$filter.name[user.input$basic$chosen.rifi.
 ripplefilter.code   <- df.rippleFilter$filter.code[user.input$basic$chosen.rifi.idx]
 
 # load libC for chosen particle
-df.libc.HIT   <- read.table( system.file( "extdata",
+df.libc.HIT   <- read.table( system.file( "extdata", "libC",
                                           df.particles$libC.file.name[user.input$basic$chosen.particle],
                                           package = "HITXML"), 
 							 sep        = "", 
@@ -223,7 +223,11 @@ repeat{
 	
   cat("Prepare start and field parameters\n")
   # Prepare start and field parameters
-	if(df.fields$shape[user.input$IES[[n.IES]]$field.shape.idx] == "circle"){
+  if(df.fields$shape[user.input$IES[[n.IES]]$field.shape.idx] == "shells"){
+    par.start    <- user.input$IES[[n.IES]]$focus.FWHM.mm * 0.99
+    field.par    <- user.input$IES[[n.IES]]$field.size.mm
+  }
+  if(df.fields$shape[user.input$IES[[n.IES]]$field.shape.idx] == "circle"){
 	   par.start    <- c(user.input$IES[[n.IES]]$focus.FWHM.mm / 2, 
                        user.input$IES[[n.IES]]$focus.FWHM.mm / 3)
 		 field.par    <- c(user.input$IES[[n.IES]]$field.size.mm, 
@@ -233,7 +237,7 @@ repeat{
 		 par.start    <- user.input$IES[[n.IES]]$focus.FWHM.mm * 0.99
 		 field.par    <- user.input$IES[[n.IES]]$field.size.mm
 	}
-		
+  
   cat("Optimize field\n")
   # Optimize field
 	optim.beam.spot.grid <- HX.optimize.field( field.shape   = df.fields$shape[user.input$IES[[n.IES]]$field.shape.idx],
