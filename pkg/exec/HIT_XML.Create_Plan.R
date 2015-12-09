@@ -61,7 +61,7 @@ user.input <- list( basic = list( date             = 20150831,
                                   therapist.name   = "USER NAME"),
                     
                     IES   = list( list( energy.value.MeV.u     = 221.05,     # value will be adjusted to closest available in libC
-                                        chosen.idx             = NULL,       # if given, overrides energy value
+                                        chosen.idx             = NA,         # if given, overrides energy value
                                         focus.FWHM.mm          = 0.0,        # value will be adjusted to closest available in libC
                                         chosen.foc.idx         = 2,          # if given, overrides focus value
                                         field.shape.idx        = 3,          # c("square", "circular", "shells")
@@ -718,6 +718,6 @@ if(!interactive.run.mode){
   }
   switch( match(current.OS, c("Linux", "Windows", "Apple")),
       system(paste("evince ./",path.save,"/",user.input$basic$name.exp.run, ".pdf", sep = "")),
-  	system(paste("cmd /c start ", first.name.exp.run, ".pdf", sep = "")),
+  	system(paste("cmd /c start ", path.save,"\\",user.input$basic$name.exp.run, ".pdf", sep = "")),
       system("Tba"))
 }

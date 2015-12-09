@@ -20,7 +20,7 @@ rbe.path <- "D:/04 - Risoe, DKFZ/03 - Methodik/11-20/20 - TRiP/04 - TRiP Basic D
 min.depth.g.cm2         <- 10
 max.depth.g.cm2         <- 15
 
-step.size.g.cm2         <- 0.1
+step.size.g.cm2         <- 0.05
 IES.step                <- 3
 plateau.dose.Gy         <- 2.0
 
@@ -31,7 +31,7 @@ bio.step.size.g.cm2     <- 0.25
 
 write.SOBP              <- TRUE
 
-plot.range              <- 1.5
+plot.range              <- 2.0
 
 #' END OF USER INPUT
 
@@ -89,9 +89,9 @@ plot.depths.g.cm2       <- seq( from       = 0.0,
                                 to         = max(ddds.sub@peak.positions.g.cm2) * plot.range, 
                                 by         = step.size.g.cm2)
 
-plot.SOBP(ddds.sub, 
-          plot.depths.g.cm2, 
-          total.weights, 
+plot.SOBP(plot.ddds = ddds.sub, 
+          plot.depths.g.cm2 = plot.depths.g.cm2, 
+          plot.weights = total.weights, 
           "(phys.opt.)")
 
 

@@ -1,6 +1,6 @@
 HX.correct.user.input <- function(user.input, n.IES, df.libc.HIT){
   # Energy
-  if(is.null(user.input$IES[[n.IES]]$chosen.idx)){
+  if(is.na(user.input$IES[[n.IES]]$chosen.idx)){
     user.input$IES[[n.IES]]$energy.value.MeV.u   <- HX.get.available.energies(user.input$IES[[n.IES]]$energy.value.MeV.u, df.libc.HIT)[1]
     user.input$IES[[n.IES]]$chosen.idx           <- df.libc.HIT$energy.no[match(user.input$IES[[n.IES]]$energy.value.MeV.u, df.libc.HIT$energy.MeV.u)]
   }else{
@@ -11,7 +11,7 @@ HX.correct.user.input <- function(user.input, n.IES, df.libc.HIT){
   # Foci
   idx                <- match(user.input$IES[[n.IES]]$chosen.idx, df.libc.HIT$energy.no)
   foci.mm            <- unlist(df.libc.HIT[idx,3:8])  		# focus values from LIBC HIT table
-  if(is.null(user.input$IES[[n.IES]]$chosen.foc.idx)){
+  if(is.na(user.input$IES[[n.IES]]$chosen.foc.idx)){
     dd                                           <- (foci.mm - user.input$IES[[n.IES]]$focus.FWHM.mm)^2
     user.input$IES[[n.IES]]$chosen.foc.idx       <- which(min(dd) == dd)
     user.input$IES[[n.IES]]$focus.FWHM.mm        <- foci.mm[user.input$IES[[n.IES]]$chosen.foc.idx]
