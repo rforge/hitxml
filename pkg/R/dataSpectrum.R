@@ -69,12 +69,16 @@ dataSpectrum <- function(SPC.data, depth.g.cm2){
     
 }
 
+spectrum.get.depth.g.cm2 <- function(spectrum){
+  return(spectrum@depth.g.cm2)
+}
+
 #' @title Total number of particles in a spectrum
 #' 
 #' @description Return sum of particles
 #' 
 #' @param x Object of class \code{\link{dataSpectrum}} or list of objects of this class
-total.n.particles <- function(x){
+spectrum.total.n.particles <- function(x){
   FUN <- function(xx){sum(xx@spectrum[,"N"])}
   if(class(x) == "dataSpectrum"){
     return(FUN(x))
@@ -93,7 +97,7 @@ total.n.particles <- function(x){
 #' @param x Object of class \code{\link{dataSpectrum}} or list of objects of this class
 #' @param stopping.power.source Descriptor for source of stopping power data (\code{\link[libamtrack]{stopping.power.source}})
 #' @param target.material Descriptor for target material (\code{\link[libamtrack]{material.no}})
-Mass.Stopping.Power.MeV.cm2.g <- function(x, stopping.power.source, target.material){
+spectrum.Mass.Stopping.Power.MeV.cm2.g <- function(x, stopping.power.source, target.material){
   FUN <- function(xx, s, t){ AT.Mass.Stopping.Power( s,
                                                      xx@spectrum[,"E.MeV.u"],
                                                      xx@spectrum[,"particle.no"],
@@ -120,8 +124,8 @@ Mass.Stopping.Power.MeV.cm2.g <- function(x, stopping.power.source, target.mater
 #' @param x Object of class \code{\link{dataSpectrum}} or list of objects of this class
 #' @param stopping.power.source Descriptor for source of stopping power data (\code{\link[libamtrack]{stopping.power.source}})
 #' @param target.material Descriptor for target material (\code{\link[libamtrack]{material.no}})
-dose.Gy <- function(x, stopping.power.source, target.material){
-  FUN <- function(xx, s, t, d){ m <- Mass.Stopping.Power.MeV.cm2.g(xx, s, t)
+spectrum.dose.Gy <- function(x, stopping.power.source, target.material){
+  FUN <- function(xx, s, t, d){ m <- spectrum.Mass.Stopping.Power.MeV.cm2.g(xx, s, t)
                                 sum(m * xx@spectrum[,"N"]) / d * 1.60217657e-10}
   
   density.g.cm3 <- AT.get.materials.data(AT.material.no.from.material.name(target.material))$density.g.cm3
@@ -211,4 +215,5 @@ setMethod(f          = "*",
                 depth.g.cm2         = e1@depth.g.cm2,
                 spectrum            = new.spectrum)
           })
+
 

@@ -495,3 +495,4 @@ redistribute.spc <- function(spc, E.min.MeV.u = 0, E.max.MeV.u = 600, dE.MeV.u =
                redistributed       = TRUE, 
                spectra             = new.spectra))
 }
+

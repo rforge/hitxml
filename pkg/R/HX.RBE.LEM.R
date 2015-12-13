@@ -54,8 +54,8 @@ RBE.LEM.single <- function(RBE.data, Spectrum.data, dose.Gy, N.events = 100, N.r
   c.1.cm2         <- 1.60217657e-10 / A.nucl.cm2
   
   # relative fluence (particle per primary particle)
-  fluence.spectrum <- total.n.particles(Spectrum.data)
-  dose.spectrum.Gy <- dose.Gy(Spectrum.data, "ICRU", "Water, Liquid")
+  fluence.spectrum <- spectrum.total.n.particles(Spectrum.data)
+  dose.spectrum.Gy <- spectrum.dose.Gy(Spectrum.data, "ICRU", "Water, Liquid")
   
   # fluence factor to get dose set
   fluence.factor   <- dose.Gy / dose.spectrum.Gy
@@ -64,7 +64,7 @@ RBE.LEM.single <- function(RBE.data, Spectrum.data, dose.Gy, N.events = 100, N.r
   N.hit.avg <- A.nucl.cm2 * fluence.spectrum * fluence.factor
   
   # Pre-compute stopping powers
-  S.MeV.cm2.g  <- Mass.Stopping.Power.MeV.cm2.g(Spectrum.data, "ICRU", "Water, Liquid")
+  S.MeV.cm2.g  <-spectrum.Mass.Stopping.Power.MeV.cm2.g(Spectrum.data, "ICRU", "Water, Liquid")
   
   # index for faster particle sampling
   idx          <- 1:nrow(Spectrum.data@spectrum)
