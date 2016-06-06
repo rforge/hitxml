@@ -38,19 +38,19 @@ XML
 }
 \examples{
 \dontrun{
-## To start the planning tool, use Rscript from the command line
-# As the location of the script can vary with your installation
-# you can use the HITXML function which return the location
-# and invokes the script directly
+## To start the default planning tool, enter (using command line):
 Rscript -e "HITXML::HITXML()"
 
-# Unfortunately this does not work under Windows where it will only
-# return the file and its location which you then have to manually 
-# insert in the command, e.g.
-Rscript C:\Users\greilich\Documents\R\win-library\2.14\HITXML\exec\HIT_XML.R
+# This will start the interactive HIT_XML.Create_Plan.R which
+# allows to create simple 2D plans of homogenous square or annular fields
 
-# There are two scripts available at the moment:
-HIT_XML.R       - generates xml-based planes
-HIT_XML_PBR.R   - forward-caculate fields from plans or beam records (PBR files)
+# Other (non-interactive) scripts that all can be found in the exec-folder are:
+HIT_XML.Create_SOBP.R           - Creates weighted fluences to form an SOBP either physically
+                                  or biologically weighted on the central axis, stores weights
+                                  in SOBP.dat which can turn read in by FLUKA
+HIT_XML.Create_Plan_from_SOBP.R - Creates full 3D plan from SOBP.dat (i.e. energy weights plus
+                                  2D homogenous fields for each energy layer)
+HIT_XML.Forward_Compute_PBR.R   - forward-caculate fields from plans or beam records (PBR files)
+HIT_XML.Forward_Compute_SOBP.R  - forward-caculate fields from SOBP.dat files (Fluka input format)
 }
 }
