@@ -78,8 +78,74 @@ spectrum.get.depth.g.cm2 <- function(spectrum){
 #' @description Return sum of particles
 #' 
 #' @param x Object of class \code{\link{dataSpectrum}} or list of objects of this class
-spectrum.total.n.particles <- function(x){
-  FUN <- function(xx){sum(xx@spectrum[,"N"])}
+#' @param particle.no if given, only these particles will be counted
+spectrum.total.n.particles <- function(x, particle.no = NULL){
+  if(is.null(particle.no)){
+    FUN <- function(xx){sum(xx@spectrum[,"N"])}
+  }else{
+    FUN <- function(xx){
+      ii <- xx@spectrum[,"particle.no"] == particle.no
+      return(sum(xx@spectrum[ii,"N"]))
+      }
+  }
+  if(class(x) == "dataSpectrum"){
+    return(FUN(x))
+  }else{
+    return(sapply(x, FUN))
+  }
+}
+
+#' @title Fluence weighted LET of particles in a spectrum (in water, using ICRU)
+#' 
+#' @description Return fLET of particles
+#' 
+#' @param x Object of class \code{\link{dataSpectrum}} or list of objects of this class
+#' @param particle.no if given, only these particles will be counted
+spectrum.fLET <- function(x, particle.no = NULL){
+  if(is.null(particle.no)){
+    ii <- rep(TRUE, nrow(x@spectrum))
+  }else{
+    ii <- x@spectrum[,"particle.no"] == particle.no
+  }
+    
+  x@spectrum   <- x@spectrum[ii,]
+  
+  FUN <- function(xx){
+    AT.fluence.weighted.LET.MeV.cm2.g(E.MeV.u     = xx@spectrum[,"E.MeV.u"],
+                                      particle.no = xx@spectrum[,"particle.no"],
+                                      fluence.cm2 = xx@spectrum[,"N"],
+                                      material.no = 1,
+                                      stopping.power.source.no = 3)$returnValue}
+  
+  if(class(x) == "dataSpectrum"){
+    return(FUN(x))
+  }else{
+    return(sapply(x, FUN))
+  }
+}
+
+#' @title Dose weighted LET of particles in a spectrum (in water, using ICRU)
+#' 
+#' @description Return dLET of particles
+#' 
+#' @param x Object of class \code{\link{dataSpectrum}} or list of objects of this class
+#' @param particle.no if given, only these particles will be counted
+spectrum.dLET <- function(x, particle.no = NULL){
+  if(is.null(particle.no)){
+    ii <- rep(TRUE, nrow(x@spectrum))
+  }else{
+    ii <- x@spectrum[,"particle.no"] == particle.no
+  }
+  
+  x@spectrum   <- x@spectrum[ii,]
+  
+  FUN <- function(xx){
+    AT.dose.weighted.LET.MeV.cm2.g(E.MeV.u     = xx@spectrum[,"E.MeV.u"],
+                                      particle.no = xx@spectrum[,"particle.no"],
+                                      fluence.cm2 = xx@spectrum[,"N"],
+                                      material.no = 1,
+                                      stopping.power.source.no = 3)$returnValue}
+  
   if(class(x) == "dataSpectrum"){
     return(FUN(x))
   }else{

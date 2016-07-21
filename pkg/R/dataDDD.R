@@ -86,7 +86,7 @@ get.dose.Gy <- function(DDD.data, depths.g.cm2){
 }
 
 ######################
-# Method plot
+# Methods
 setMethod(f          = "plot", 
           signature  = c("dataDDD"),
           definition = function(x) {
@@ -122,3 +122,18 @@ setMethod(f          = "*",
                 peak.position.g.cm2 = e1@peak.position.g.cm2,
                 DDD                 = new.ddd)
           })
+
+######################
+# Routines
+writeDDD <- function(ddd){
+  output <- c("!filetype    ddd", 
+              "!fileversion    19980520", 
+              paste0("!filedate    ", date()), 
+              paste0("!projectile    ", ddd@projectile),
+              "!material      H2O",
+              "!composition   H2O",
+              "!density 1",
+              paste0("!energy ", ddd@beam.energy.MeV.u),
+              "   z[g/cm**2] dE/dz[MeV/(g/cm**2)] FWHM1[g/cm**2] factor FWHM2[g/cm**2]\n!ddd\n")
+  write(output, "test.ddd", sep = "\n")
+}

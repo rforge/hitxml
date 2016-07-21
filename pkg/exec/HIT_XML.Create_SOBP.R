@@ -17,16 +17,19 @@ spc.path <- "D:/04 - Risoe, DKFZ/03 - Methodik/11-20/20 - TRiP/04 - TRiP Basic D
 rbe.path <- "D:/04 - Risoe, DKFZ/03 - Methodik/11-20/20 - TRiP/04 - TRiP Basic Data/HIT/03 - TRiP98DATA_HIT-20131120/RBE"
 
 # minimal and maximal depth in cm
-min.depth.g.cm2         <- 10
-max.depth.g.cm2         <- 15
+min.depth.g.cm2         <- 4
+max.depth.g.cm2         <- 8
 
-step.size.g.cm2         <- 0.05
-IES.step                <- 3
-plateau.dose.Gy         <- 2.0
+step.size.g.cm2         <- 0.025
+IES.step                <- 2
+plateau.dose.Gy         <- 0.5
 
-biol.optimization       <- TRUE
+output.LET              <- TRUE
+LET.step.size.g.cm2     <- 0.25
+
+biol.optimization       <- FALSE
 rbe.file                <- "target02.rbe"
-n.biol.opt.steps        <- 5
+n.biol.opt.steps        <- 1
 bio.step.size.g.cm2     <- 0.25
 
 write.SOBP              <- TRUE
@@ -97,7 +100,7 @@ plot.SOBP(plot.ddds = ddds.sub,
 
 #################################
 # B. Biological optimzation steps
-if(biol.optimization){
+if(biol.optimization | output.LET){
   #################
   # 1. Read in data
   
@@ -115,9 +118,90 @@ if(biol.optimization){
   # save(ddds.spc, file = "ddds.spc.rda")
   # load("ddds.spc.rda")
   
+  rbe.data <- dataRBE(rbe.file, rbe.path)
+  
   # no.IES <- 1
   # depths.g.cm2 <- 0
   
+
+  if(output.LET){
+    LET.depths.g.cm2 <- seq(0, max.depth.g.cm2*2, by = LET.step.size.g.cm2)
+    
+    # Returns a list (length number of IESs in SOBP)
+    # of lists (each length number of depths covering entire depth dose curve)
+    # of dataSpectrum objects - representing the spectra
+    # from the individual IESs (first index) contributing at specific depth (second index)
+    # TODO: Move this format to its own class and adapt lapply's below
+    spectra.at.depth  <- lapply(1:no.IES,
+                                function(i, s, d){
+                                  cat("Getting spectra from IES", i, "\n")
+                                  dataSpectrum(s[[i]], d)},
+                                s = ddds.spc,
+                                d = LET.depths.g.cm2)
+    # save(spectra.at.depth, file = "sad.rda")
+    # load("sad.rda")
+    
+    w.spectra.at.depth  <- lapply(1:no.IES,
+                                  function(i, s, w){
+                                    cat("Weighting spectra from IES", i, "\n")
+                                    lapply(1:length(s[[i]]),
+                                           function(j, ss, ww){
+                                             ss[[j]] * ww},
+                                           ss = s[[i]],
+                                           ww = w[i])},
+                                  s = spectra.at.depth,
+                                  w = total.weights)
+    
+    eff.spectra.at.depth <- lapply(1:length(LET.depths.g.cm2),
+                                   function(i, s, n){
+                                     cat("Adding spectra for depth", i, "\n")
+                                     ss <- s[[1]][[i]]
+                                     if(n > 1){
+                                       for(j in 2:n){
+                                         ss <- ss + s[[j]][[i]]
+                                       }
+                                     }
+                                     ss},
+                                   s = w.spectra.at.depth,
+                                   n = no.IES)
+    
+    total                       <- sapply(eff.spectra.at.depth,
+                                          spectrum.total.n.particles)
+    primaries                   <- sapply(eff.spectra.at.depth,
+                                          spectrum.total.n.particles,
+                                          particle.no = 6012)
+    fLET.total                  <- sapply(eff.spectra.at.depth,
+                                          spectrum.fLET)/10
+    fLET.primaries              <- sapply(eff.spectra.at.depth,
+                                          spectrum.fLET,
+                                          particle.no = 6012)/10
+    dLET.total                  <- sapply(eff.spectra.at.depth,
+                                          spectrum.dLET)/10
+
+    fLET.primaries[LET.depths.g.cm2 > max.depth.g.cm2] <- NA
+    #dLET.total[LET.depths.g.cm2 > max.depth.g.cm2 * 1.25] <- NA
+    
+    xyplot(total + primaries ~ LET.depths.g.cm2,
+           grid = TRUE,
+           type = "l",
+           auto.key = list(space = "right"),
+           xlab = list("depth / cm", cex=1.5),
+           ylab = list("fluence / (1/cm2)", cex=1.5),
+           scale = list(cex = 1.25))
+
+    xyplot(fLET.primaries + fLET.total + dLET.total ~ LET.depths.g.cm2,
+           grid = TRUE,
+           type = "l",
+           auto.key = list(space = "right"),
+           xlab = list("depth / cm", cex=1.5),
+           ylab = list("fluence / (1/cm2)", cex=1.5),
+           scale = list(cex = 1.25))
+    
+    if(!biol.optimization){
+      stop("No error! Just no biological optimization requested")
+    }
+  }
+
   # Returns a list (length number of IESs in SOBP)
   # of lists (each length number of depths covering SOBP)
   # of dataSpectrum objects - representing the spectra
@@ -132,7 +216,6 @@ if(biol.optimization){
   # save(spectra.at.depth, file = "sad.rda")
   # load("sad.rda")
 
-  rbe.data <- dataRBE(rbe.file, rbe.path)
   
   ###############################
   # 2. Iterate with RBE weighting
