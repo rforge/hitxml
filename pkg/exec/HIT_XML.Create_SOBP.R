@@ -22,15 +22,15 @@ max.depth.g.cm2         <- 8
 
 step.size.g.cm2         <- 0.025
 IES.step                <- 2
-plateau.dose.Gy         <- 0.5
+plateau.dose.Gy         <- 2
 
 output.LET              <- TRUE
 LET.step.size.g.cm2     <- 0.25
 
-biol.optimization       <- FALSE
-rbe.file                <- "target02.rbe"
+biol.optimization       <- TRUE
+rbe.file                <- "custom7um.rbe"
 n.biol.opt.steps        <- 1
-bio.step.size.g.cm2     <- 0.25
+bio.step.size.g.cm2     <- 0.5
 
 write.SOBP              <- TRUE
 
@@ -179,7 +179,16 @@ if(biol.optimization | output.LET){
                                           spectrum.dLET)/10
 
     fLET.primaries[LET.depths.g.cm2 > max.depth.g.cm2] <- NA
-    #dLET.total[LET.depths.g.cm2 > max.depth.g.cm2 * 1.25] <- NA
+
+    D.phys.Gy                  <-  get.dose.Gy.from.set(DDD.set      = ddds.sub, 
+                                                        depths.g.cm2 = LET.depths.g.cm2, 
+                                                        weights      = total.weights)
+
+    rbe                   <- HX.RBE.LEM(rbe.data, 
+                                        eff.spectra.at.depth, 
+                                        D.phys.Gy)$RBE
+
+    rbe[LET.depths.g.cm2 > max.depth.g.cm2 *1.5] <- NA
     
     xyplot(total + primaries ~ LET.depths.g.cm2,
            grid = TRUE,
@@ -197,6 +206,24 @@ if(biol.optimization | output.LET){
            ylab = list("fluence / (1/cm2)", cex=1.5),
            scale = list(cex = 1.25))
     
+    xyplot(rbe ~ LET.depths.g.cm2,
+           grid = TRUE,
+           type = "l",
+           auto.key = list(space = "right"),
+           xlab = list("depth / cm", cex=1.5),
+           ylab = list("RBE", cex=1.5),
+           scale = list(cex = 1.25))
+    
+    D.bio.GyRBE <- D.phys.Gy * rbe
+    
+    xyplot(D.phys.Gy + D.bio.GyRBE ~ LET.depths.g.cm2,
+           grid = TRUE,
+           type = "l",
+           auto.key = list(space = "right"),
+           xlab = list("depth / cm", cex=1.5),
+           ylab = list("dose / Gy, GyRBE", cex=1.5),
+           scale = list(cex = 1.25))
+
     if(!biol.optimization){
       stop("No error! Just no biological optimization requested")
     }
