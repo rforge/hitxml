@@ -110,6 +110,9 @@ RBE.LEM.single <- function(RBE.data, Spectrum.data, dose.Gy, N.events = 100, N.r
   cur.alpha.ion <- alpha.ion( RBE.data, 
                               AT.particle.name.from.particle.no(particle.no), 
                               E.MeV.u)
+  if(sum(is.na(cur.alpha.ion))>0){
+    warning("At least some particles / energies exceed data given in RBE table!")
+  }
   
   # dose dependent slopes of the heavy ion effect curve
   s.1.Gy        <-  cur.alpha.ion + (cur.s.max - cur.alpha.ion) * D.k1 / cur.D.cut.Gy
@@ -118,9 +121,9 @@ RBE.LEM.single <- function(RBE.data, Spectrum.data, dose.Gy, N.events = 100, N.r
   n             <- s.1.Gy * LET * c.1.cm2
   
   # D.abs and N.lethal for N.hit
-  D.abs.Nhit.Gy <- tapply(D.abs.Gy, i, max)
-  N.lethal.Nhit <- tapply(n, i, sum)
-  j             <- tapply(j, i, unique)
+  D.abs.Nhit.Gy <- tapply(D.abs.Gy, i, max, na.rm = TRUE)
+  N.lethal.Nhit <- tapply(n, i, sum, na.rm = TRUE)
+  j             <- tapply(j, i, unique, na.rm = TRUE)
   
   # average absorbed dose (for N.runs chunks to assess variance)
   D.abs.average.Gy <- tapply(D.abs.Nhit.Gy, j, function(x){sum(x)/N.events})
@@ -141,7 +144,7 @@ RBE.LEM.single <- function(RBE.data, Spectrum.data, dose.Gy, N.events = 100, N.r
   D.biol.Gy <- D1.Gy
   ii    <- D1.Gy >= cur.D.cut.Gy
   D.biol.Gy[ii] <- D2.Gy[ii]
-  
+
   LEM.RBE <- D.biol.Gy / D.abs.average.Gy
   
   return(c( RBE             = mean(LEM.RBE),

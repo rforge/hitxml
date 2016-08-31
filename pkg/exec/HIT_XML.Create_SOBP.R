@@ -27,10 +27,10 @@ plateau.dose.Gy         <- 2
 output.LET              <- TRUE
 LET.step.size.g.cm2     <- 0.25
 
-biol.optimization       <- TRUE
+biol.optimization       <- FALSE
 rbe.file                <- "custom7um.rbe"
 n.biol.opt.steps        <- 1
-bio.step.size.g.cm2     <- 0.5
+bio.step.size.g.cm2     <- 0.25
 
 write.SOBP              <- TRUE
 
