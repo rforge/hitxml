@@ -27,12 +27,12 @@ read.FLUKA.phase.space <- function(path,
   data.list <- lapply(file.list,
                       function(x) {
                         cat("Reading", x, "...\n")
-                        read.table(x,
-                                   header = TRUE,
-                                   stringsAsFactors = FALSE)
+                        as.data.table(read.table(x,
+                                                 header = TRUE,
+                                                 stringsAsFactors = FALSE))
                       })
   
-  df.raw        <- do.call("rbind", data.list)
+  df.raw        <- rbindlist(data.list)
   df.raw$travel <-
     paste0("From: ", df.raw$OLDREG, " / to: ", df.raw$NEWREG)
   

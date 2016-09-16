@@ -21,21 +21,32 @@ HX.read.PBR <- function (file.name, IES.only = FALSE)
   if (IES.only == TRUE) {
     return(df.IES)
   }
-  n.voxel <- length(getNodeSet(doc = doc, path = "//Voxel"))
-  df <- data.frame(IES = numeric(n.voxel), x.mm = numeric(n.voxel), 
-                   y.mm = numeric(n.voxel), N.particles = numeric(n.voxel))
-  cur.idx <- 1
+  
+  df <- NULL
   for (i in 1:n.IES) {
     cur.IES <- df.IES$IES[i]
-    tmp.x <- as.numeric(xpathApply(doc, paste("//IES[@number=\"", 
-                                              cur.IES, "\"]/Voxel", sep = ""), xmlGetAttr, "x"))
-    idx <- cur.idx:(cur.idx + length(tmp.x) - 1)
-    df$IES[idx] <- rep(cur.IES, length(idx))
-    df$x.mm[idx] <- tmp.x
-    df$y.mm[idx] <- as.numeric(xpathApply(doc, paste("//IES[@number=\"", 
-                                                     cur.IES, "\"]/Voxel", sep = ""), xmlGetAttr, "y"))
-    df$N.particles[idx] <- as.numeric(xpathApply(doc, paste("//IES[@number=\"", 
-                                                            cur.IES, "\"]/Voxel", sep = ""), xmlGetAttr, "particles"))
+    x       <- as.numeric(xpathApply(doc, 
+                                     paste0("//IES[@number=\"", 
+                                            cur.IES, 
+                                            "\"]/Voxel"), 
+                                     xmlGetAttr,
+                                     "x"))
+    y       <- as.numeric(xpathApply(doc, 
+                                     paste0("//IES[@number=\"", 
+                                            cur.IES, 
+                                            "\"]/Voxel"), 
+                                     xmlGetAttr,
+                                     "y"))
+    N       <- as.numeric(xpathApply(doc, 
+                                     paste0("//IES[@number=\"", 
+                                            cur.IES, 
+                                            "\"]/Voxel"), 
+                                     xmlGetAttr,
+                                     "particles"))
+    df      <- rbind(df, data.frame(IES         = cur.IES,
+                                    x.mm        = x,
+                                    y.mm        = y,
+                                    N.particles = N))
   }
   df <- merge(df, df.IES, by = "IES")
   return(df)

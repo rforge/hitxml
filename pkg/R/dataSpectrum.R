@@ -101,7 +101,7 @@ spectrum.total.n.particles <- function(x, particle.no = NULL){
 #' 
 #' @param x Object of class \code{\link{dataSpectrum}} or list of objects of this class
 #' @param particle.no if given, only these particles will be counted
-spectrum.fLET <- function(x, particle.no = NULL){
+spectrum.fLET <- function(x, stopping.power.source.no = 3, material.no = 1, particle.no = NULL){
   if(is.null(particle.no)){
     ii <- rep(TRUE, nrow(x@spectrum))
   }else{

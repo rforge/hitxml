@@ -7,19 +7,19 @@ library(HITXML)
 #' USER INPUT START
 
 SIS.path           <- "D://04 - Risoe, DKFZ//03 - Methodik//11-20//20 - TRiP//04 - TRiP Basic Data//HIT//03 - TRiP98DATA_HIT-20131120//SIS"
-SIS.file           <- "12C_1.6.2008.sis"
+SIS.file           <- "1H_1.1.2009.sis"
 
-SOBP.file          <- "SOBP.dat"
+SOBP.file          <- "SOBP_1H.dat"
 fluence.scaling.factor <- 1.0 # Use if you want to change the fluence in a biologically optimized plan (as changing the
                               # biological dose will not scale the phys. dose / fluence linearily)
 particle.name      <- "12C"
 
-name.exp.series    <- "SINF"
-name.exp.run       <- "clonogenic1"
+name.exp.series    <- "SOBP"
+name.exp.run       <- "SOBP_1H"
 
 rifi               <- c("None", "3 mm")[1]
 field.shape        <- c("square", "circular")[1]
-field.side.size.mm <- 200
+field.side.size.mm <- 100
 
 focus.no           <- 3
 

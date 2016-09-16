@@ -444,8 +444,9 @@ redistribute.spc <- function(spc, E.min.MeV.u = 0, E.max.MeV.u = 600, dE.MeV.u =
   }
   
   particle.nos <- sort(unique(spc@spectra[,"particle.no"]))
-  if(any(!(particle.nos%in%c(1002,2004,3006,4008,5010,6012)))){
-    stop("SPC contains more than six canonical particles.")
+  if(any(!(particle.nos%in%c(1002,2004,3006,4008,5010,6012)))&
+     any(!(particle.nos%in%c(1001)))){
+    warnings("SPC contains more than six canonical particles.")
   }
   
   depth.steps  <- sort(unique(spc@spectra[,"depth.step"]))

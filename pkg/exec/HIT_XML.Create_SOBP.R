@@ -17,12 +17,12 @@ spc.path <- "D:/04 - Risoe, DKFZ/03 - Methodik/11-20/20 - TRiP/04 - TRiP Basic D
 rbe.path <- "D:/04 - Risoe, DKFZ/03 - Methodik/11-20/20 - TRiP/04 - TRiP Basic Data/HIT/03 - TRiP98DATA_HIT-20131120/RBE"
 
 # minimal and maximal depth in cm
-min.depth.g.cm2         <- 4
-max.depth.g.cm2         <- 8
+min.depth.g.cm2         <- 10
+max.depth.g.cm2         <- 15
 
 step.size.g.cm2         <- 0.025
-IES.step                <- 2
-plateau.dose.Gy         <- 2
+IES.step                <- 3
+plateau.dose.Gy         <- .1
 
 output.LET              <- TRUE
 LET.step.size.g.cm2     <- 0.25

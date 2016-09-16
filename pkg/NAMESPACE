@@ -1,3 +1,6 @@
+import(data.table)
+import(libamtrack)
 importFrom(Rcpp, evalCpp)
+import(XML)
 exportPattern("^[^\\.]")
 useDynLib(HITXML)
