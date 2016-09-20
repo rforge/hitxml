@@ -37,6 +37,7 @@ rm(list =ls())
 
 # load package
 library(HITXML)
+
 program.version <- packageDescription("HITXML")$Version
 program.date    <- packageDescription("HITXML")$Date
 
@@ -44,13 +45,13 @@ program.date    <- packageDescription("HITXML")$Date
 # This approach allows to run the script interactively, too,
 # e.g. for debugging. Normal mode is non-interactively
 # by Rscript from command line.
-user.input <- list( basic = list( date             = 20150831,
-                                  name.exp.series  = "SphereTest",
-                                  name.exp.run     = "st1",
+user.input <- list( basic = list( date             = 20160920,
+                                  name.exp.series  = "anTest",
+                                  name.exp.run     = "ab0001Test",
                                   chosen.particle  = 1,        # c("Protons", "Helium-4 ions", "Carbon ions", "Oxygen ions")
                                   chosen.rifi.idx  = 1,        # c("None", "3 mm")
                                   intensity        = 1,
-                                  resolution.mm    = 2),
+                                  resolution.mm    = 1),
                     
                     fixed = list( time             = format(Sys.time(), "%Y-%m-%dT%H:%M:%S.1111111+02:00"), # Due to POSIX/Windows problem hardcode fractions of second and time zone for timestamp, TODO: Fix by more flexible solution
                                   room.name        = "Room4",
@@ -60,13 +61,13 @@ user.input <- list( basic = list( date             = 20150831,
                                   patient.sex      = "M",
                                   therapist.name   = "USER NAME"),
                     
-                    IES   = list( list( energy.value.MeV.u     = 221.05,     # value will be adjusted to closest available in libC
+                    IES   = list( list( energy.value.MeV.u     = 50.6,       # value will be adjusted to closest available in libC
                                         chosen.idx             = NA,         # if given, overrides energy value
                                         focus.FWHM.mm          = 0.0,        # value will be adjusted to closest available in libC
-                                        chosen.foc.idx         = 2,          # if given, overrides focus value
-                                        field.shape.idx        = 3,          # c("square", "circular", "shells")
-                                        fluence.cm2.or.dose.Gy = -1.0,
-                                        field.size.mm          = 150,
+                                        chosen.foc.idx         = 3,          # if given, overrides focus value
+                                        field.shape.idx        = 1,          # c("square", "circular", "shells")
+                                        fluence.cm2.or.dose.Gy = 2e5,
+                                        field.size.mm          = 50,
                                         r.min.mm               = 0.0)))
 
 # Script run interactively or non-interactively, set connection accordingly
@@ -110,8 +111,8 @@ df.particles <- data.frame( particle.name      = c("PROTON", "ION", "ION", "ION"
                                                     "LIBC HIT Version 1.5 O16 V2.txt"),
                             stringsAsFactors   = FALSE)
 
-df.particles$particle.no <- AT.particle.no.from.Z.and.A(Z = df.particles$charge,
-                                                        A = df.particles$mass)$particle.no
+df.particles$particle.no <- libamtrack::AT.particle.no.from.Z.and.A( Z = df.particles$charge,
+                                                                     A = df.particles$mass)$particle.no
 
 df.rippleFilter <- data.frame( filter.name      = c("None", "3mm"),
                                filter.code      = c(254, 3),
@@ -207,18 +208,18 @@ repeat{
 	# Compute dose from fluence or vice versa
   if(user.input$IES[[n.IES]]$fluence.cm2.or.dose.Gy < 0.0){
 	  dose.Gy     <- -1.0 * user.input$IES[[n.IES]]$fluence.cm2.or.dose.Gy
-	  fluence.cm2 <- AT.fluence.cm2.from.dose.Gy( E.MeV.u      = user.input$IES[[n.IES]]$energy.value.MeV.u,
-	                                              D.Gy         = dose.Gy,
-	                                              particle.no  = df.particles$particle.no[user.input$basic$chosen.particle],
-	                                              material.no  = 1,                          # i.e. liquid water
-	                                              stopping.power.source.no = 3)$fluence.cm2  # use ICRU49/73 data
+	  fluence.cm2 <- libamtrack::AT.fluence.cm2.from.dose.Gy( E.MeV.u      = user.input$IES[[n.IES]]$energy.value.MeV.u,
+            	                                              D.Gy         = dose.Gy,
+            	                                              particle.no  = df.particles$particle.no[user.input$basic$chosen.particle],
+            	                                              material.no  = 1,                          # i.e. liquid water
+            	                                              stopping.power.source.no = 3)$fluence.cm2  # use ICRU49/73 data
 	}else{                                             
 	  fluence.cm2 <- user.input$IES[[n.IES]]$fluence.cm2.or.dose.Gy
-	  dose.Gy     <- AT.dose.Gy.from.fluence.cm2( E.MeV.u      = user.input$IES[[n.IES]]$energy.value.MeV.u,
-	                                              fluence.cm2  = fluence.cm2,
-	                                              particle.no  = df.particles$particle.no[user.input$basic$chosen.particle],
-	                                              material.no  = 1,                      # i.e. liquid water
-	                                              stopping.power.source.no = 3)$dose.Gy  # use ICRU49/73 data
+	  dose.Gy     <- libamtrack::AT.dose.Gy.from.fluence.cm2( E.MeV.u      = user.input$IES[[n.IES]]$energy.value.MeV.u,
+            	                                              fluence.cm2  = fluence.cm2,
+            	                                              particle.no  = df.particles$particle.no[user.input$basic$chosen.particle],
+            	                                              material.no  = 1,                      # i.e. liquid water
+            	                                              stopping.power.source.no = 3)$dose.Gy  # use ICRU49/73 data
 	}   
 	
   cat("Prepare start and field parameters\n")
@@ -257,17 +258,17 @@ repeat{
 	voxel.node.list <- list()
 	for (i in 1:nrow(optim.beam.spot.grid)){
 		 # i <- 1
-		 voxel.node.list[[i]] <- xmlNode("Voxel", 
-										   attrs = c( x         = optim.beam.spot.grid$x.mm[i], 
-													  y         = optim.beam.spot.grid$y.mm[i], 
-													  particles = optim.beam.spot.grid$N.particles[i]))
+		 voxel.node.list[[i]] <- XML::xmlNode("Voxel", 
+                    										   attrs = c( x         = optim.beam.spot.grid$x.mm[i], 
+                  	  												        y         = optim.beam.spot.grid$y.mm[i], 
+                  		  											        particles = optim.beam.spot.grid$N.particles[i]))
 	}
 
-	nodes.IES[[n.IES]] <- xmlNode("IES", 
-					    	      attrs        = c(number          = as.numeric(n.IES),
-								   	               energy          = as.numeric(user.input$IES[[n.IES]]$energy.value.MeV.u),
-											       focus           = as.numeric(user.input$IES[[n.IES]]$focus.FWHM.mm)),
-						          .children    = voxel.node.list)
+	nodes.IES[[n.IES]] <- XML::xmlNode("IES", 
+                					    	      attrs        = c(number          = as.numeric(n.IES),
+                    								   	               energy          = as.numeric(user.input$IES[[n.IES]]$energy.value.MeV.u),
+                		           									       focus           = as.numeric(user.input$IES[[n.IES]]$focus.FWHM.mm)),
+                						                           .children    = voxel.node.list)
 
 	# Add to IES overview data frame
 	df.IES <- rbind(df.IES,
@@ -292,11 +293,11 @@ repeat{
         user.input$IES[[i]]=user.input$IES[[i-1]]
       
         # Repeat node
-        nodes.IES[[i]] <- xmlNode("IES", 
-                                    attrs        = c(number          = as.numeric(i),
-                                                     energy          = as.numeric(user.input$IES[[i]]$energy.value.MeV.u),
-                                                     focus           = as.numeric(user.input$IES[[i]]$focus.FWHM.mm)),
-                                    .children    = voxel.node.list)
+        nodes.IES[[i]] <- XML::xmlNode("IES", 
+                                       attrs        = c(number          = as.numeric(i),
+                                                        energy          = as.numeric(user.input$IES[[i]]$energy.value.MeV.u),
+                                                        focus           = as.numeric(user.input$IES[[i]]$focus.FWHM.mm)),
+                                       .children    = voxel.node.list)
       
         # Add to IES overview data frame
         df.IES <- rbind(df.IES,
@@ -406,7 +407,7 @@ if(!interactive.run.mode){
                                                default       = 2,
                                                input.con     = input.con))
 }else{
-	plan.format <- 1
+	plan.format <- 2
 }
 
 first.name.exp.run <- user.input$basic$name.exp.run
@@ -441,30 +442,31 @@ repeat{
 
 
 	program.context <- paste(path.plans, file.name.plan, sep = "")
-	md5.checksum    <- digest(program.context, algo = "md5")
+	md5.checksum    <- digest::digest(program.context, algo = "md5")
 
-	node.GroupParameter <- xmlNode(  "GroupParameter", attrs = c(name = "ExecuteSFP"),
-										.children = list(xmlNode("Parameter", 
-																 attrs = c(name = "ProgramID"), 
-																 value = "TCsPerformIrradiation"),
-														 xmlNode("Parameter", 
-																 attrs = c(name = "ProgramContext"), 
-																 value = program.context),
-														 xmlNode("Parameter", 
-																 attrs = c(name = "ProgramContextMd5CheckSum"), 
-																 value = md5.checksum),
-														 xmlNode("Parameter", 
-																 attrs = c(name = "ProgramResult"), 
-																 value = (paste(path.result, file.name.result, sep = ""))),
-														 xmlNode("Parameter", 
-																 attrs = c(name = "Timeout"), 
-																 value = "3000000")))
+	node.GroupParameter <- XML::xmlNode(  "GroupParameter", 
+	                                      attrs = c(name = "ExecuteSFP"),
+										                    .children = list(XML::xmlNode("Parameter", 
+																        attrs = c(name = "ProgramID"), 
+																        value = "TCsPerformIrradiation"),
+												 XML::xmlNode("Parameter", 
+      																 attrs = c(name = "ProgramContext"), 
+      																 value = program.context),
+												 XML::xmlNode("Parameter", 
+      																 attrs = c(name = "ProgramContextMd5CheckSum"), 
+      																 value = md5.checksum),
+												 XML::xmlNode("Parameter", 
+      																 attrs = c(name = "ProgramResult"), 
+      																 value = (paste(path.result, file.name.result, sep = ""))),
+												 XML::xmlNode("Parameter", 
+            													 attrs = c(name = "Timeout"), 
+            													 value = "3000000")))
 
-	node.Message        <- xmlNode( "Message", 
-									attrs = c( type      = "SET", 
-											   timestamp = user.input$basic$time, 
-											   device    = "SFPGM"), 
-									.children = list(node.GroupParameter))
+	node.Message        <- XML::xmlNode( "Message", 
+									                     attrs = c( type      = "SET", 
+                          											  timestamp = user.input$basic$time, 
+                          											  device    = "SFPGM"), 
+									                     .children = list(node.GroupParameter))
 
 	## Write plan
 
@@ -472,74 +474,74 @@ repeat{
 	## necessary and not used. Their generation code is kept
 	## in the svn of <0.6.2 versions. Maybe it will be useful one day.
 
-	node.PBR <- xmlNode("Parameter", 
-						attrs     = c(Name = "PhysicalBeamRecordFile"), 
-						value     = path.PBR)
-	node.MBR <- xmlNode("Parameter", 
-						attrs     = c(Name = "MachineBeamRecordFile"), 
-						value     = path.MBR)
+	node.PBR <- XML::xmlNode( "Parameter", 
+                						attrs     = c(Name = "PhysicalBeamRecordFile"), 
+                						value     = path.PBR)
+	node.MBR <- XML::xmlNode( "Parameter", 
+                						attrs     = c(Name = "MachineBeamRecordFile"), 
+                						value     = path.MBR)
 
-	node.Spill <- xmlNode("Parameter", 
-						  attrs = c(Name = "FullSpill"), 
-						  value = "false")
+	node.Spill <- XML::xmlNode( "Parameter", 
+                						  attrs = c(Name = "FullSpill"), 
+                						  value = "false")
 
-	node.SpillIntensity <- xmlNode("Parameter", 
-						  attrs = c(Name = "SpillIntensity"), 
-						  value = sprintf("%2.1e", user.input$IES[[1]]$spill.intensity))
+	node.SpillIntensity <- XML::xmlNode("Parameter", 
+                        						  attrs = c(Name = "SpillIntensity"), 
+                        						  value = sprintf("%2.1e", user.input$IES[[1]]$spill.intensity))
 
-	node.PosCorrLoop <- xmlNode("Parameter", 
-								attrs = c(Name = "EnablePosCorrectionLoop"), 
-								value = "true")
+	node.PosCorrLoop <- XML::xmlNode( "Parameter", 
+                    								attrs = c(Name = "EnablePosCorrectionLoop"), 
+                    								value = "true")
 
-	node.DosemeterName <- xmlNode("Parameter", 
-									 attrs = c(Name = "DosemeterDeviceName"), 
-									 value = "none")
+	node.DosemeterName <- XML::xmlNode("Parameter", 
+                  									 attrs = c(Name = "DosemeterDeviceName"), 
+                  									 value = "none")
 
-	node.DosemeterCommand <- xmlNode("Parameter", 
-									 attrs = c(Name = "DosemeterCommand"), 
-									 value = "none")
+	node.DosemeterCommand <- XML::xmlNode( "Parameter", 
+                      									 attrs = c(Name = "DosemeterCommand"), 
+                      									 value = "none")
 
-	node.Channel <- xmlNode("Parameter", 
-							attrs = c(Name = "Channel"), 
-							value = "All")
+	node.Channel <- XML::xmlNode( "Parameter", 
+                  							attrs = c(Name = "Channel"), 
+                  							value = "All")
 
-	node.EnableIC1 <- xmlNode("Parameter", 
-							  attrs = c(Name = "EnableIC1"), 
-							  value = "true")
+	node.EnableIC1 <- XML::xmlNode( "Parameter", 
+                  							  attrs = c(Name = "EnableIC1"), 
+                  							  value = "true")
 
-	node.EnableIC2 <- xmlNode("Parameter", 
-							  attrs = c(Name = "EnableIC2"), 
-							  value = "true")
+	node.EnableIC2 <- XML::xmlNode( "Parameter", 
+                  							  attrs = c(Name = "EnableIC2"), 
+                  							  value = "true")
 
-	node.EnableIM <- xmlNode("Parameter", 
-							 attrs = c(Name = "EnableIM"), 
-							 value = "true")
+	node.EnableIM <- XML::xmlNode( "Parameter", 
+                  							 attrs = c(Name = "EnableIM"), 
+                  							 value = "true")
 
-	node.RstFormat <- xmlNode( "RstFormat", 
-							   value = "PT_2004")
+	node.RstFormat <- XML::xmlNode( "RstFormat", 
+                							   value = "PT_2004")
 
-	node.Patient <-  xmlNode("Patient", 
-							 attrs = c( id        = user.input$fixed$patient.id, 
-										name      = user.input$fixed$tumor.name, 
-										sex       = user.input$fixed$patient.sex, 
-										birthDate = user.input$fixed$patient.birth))
+	node.Patient <-  XML::xmlNode("Patient", 
+                							 attrs = c( id        = user.input$fixed$patient.id, 
+                										name      = user.input$fixed$tumor.name, 
+                										sex       = user.input$fixed$patient.sex, 
+                										birthDate = user.input$fixed$patient.birth))
 
-	node.TxInitiation <-  xmlNode("TxInitiation", 
+	node.TxInitiation <-  XML::xmlNode("TxInitiation", 
 								  attrs = c( therapist = user.input$fixed$therapist.name, 
 											 dateTime  = "2007-01-23T13:52:27.2343750+01:00"))
 
-	node.BAMS <- xmlNode( "BAMS", 
+	node.BAMS <- XML::xmlNode( "BAMS", 
 						  attrs = c( rippleFilter         = ripplefilter.code , 
 									 rangeShifter         = "3", 
 									 rangeShifterDistance = "20"))
-	node.table <- xmlNode( "TxTable", 
+	node.table <- XML::xmlNode( "TxTable", 
 						   attrs = c( roll            = "0", 
 									  pitch           = "0", 
 									  lateral         = "150", 
 									  longitudinal    = "-400", 
 									  isocentricAngle = "0", 
 									  vertical        = "-100.5"))
-	node.gantry <- xmlNode( "Gantry", 
+	node.gantry <- XML::xmlNode( "Gantry", 
 							attrs = c( angle = "90"))
 
 	tmp.projectile   <- df.particles$particle.name[user.input$basic$chosen.particle]
@@ -554,7 +556,7 @@ repeat{
 	}
 	
 	
-	node.TxRoom <- xmlNode("TxRoom", 
+	node.TxRoom <- XML::xmlNode("TxRoom", 
 						   attrs = c( name         = user.input$fixed$room.name, 
 									  projectile   = tmp.projectile, 
 									  charge       = tmp.charge, 
@@ -565,7 +567,7 @@ repeat{
 	# likely to cause problems as the same beam UID must be provided manually
 	# to cancel beam requests in the queueing system, so just leave it
 	# as it is
-	node.Beam <- xmlNode("Beam", 
+	node.Beam <- XML::xmlNode("Beam", 
 						  attrs     = c(uid = "bee035c5-03f6-4e9c-94b9-31f0fc484db1"),                           
 						  .children = c(list( node.RstFormat,
 											  node.Patient,
@@ -576,15 +578,15 @@ repeat{
 											  node.gantry),
 											  nodes.IES))
 							
-	node.PTTxPlan <- xmlNode( "PTTxPlan", 
+	node.PTTxPlan <- XML::xmlNode( "PTTxPlan", 
 							  .children = list(node.Beam))
 
-	node.BeamPlan <- xmlNode( "Parameter", 
+	node.BeamPlan <- XML::xmlNode( "Parameter", 
 							  attrs = c(Name = "BeamPlan"),
 							  .children = list(node.PTTxPlan))
 
 	if(user.input$IES[[1]]$spill.intensity == 0){
-    node.SfpParameters <- xmlNode( "SfpParameters", 
+    node.SfpParameters <- XML::xmlNode( "SfpParameters", 
 								   .children = list( node.PBR, 
 													 node.MBR, 
 													 node.Spill, 
@@ -597,7 +599,7 @@ repeat{
 													 node.EnableIM,
 													 node.BeamPlan))
 	}else{
-	node.SfpParameters <- xmlNode( "SfpParameters", 
+	node.SfpParameters <- XML::xmlNode( "SfpParameters", 
 								   .children = list( node.PBR, 
 													 node.MBR, 
 													 node.Spill, 
@@ -615,7 +617,7 @@ repeat{
 
   
 	# It seems we do not need the first three node for a working plan
-	node.WorkflowContext <- xmlNode( "WorkflowContext",
+	node.WorkflowContext <- XML::xmlNode( "WorkflowContext",
 									 .children = list( #node.Housekeeping,
 													   #node.Specifications,
 													   #node.UIs,
@@ -629,7 +631,7 @@ repeat{
 # 									       xsi:noNamespaceSchemaLocation    = "RTT-PT-Plan.xsd"))
 
   # THIS IS THE NEW PLAN FORMAT - with small fixes (Yukihara, Oct. 2014)
-  node.PTTxPlanMd5 <- xmlNode("PTTxPlanMd5",
+  node.PTTxPlanMd5 <- XML::xmlNode("PTTxPlanMd5",
                             node.PTTxPlan,
                             attrs = c( md5 = "noMD5",
                                        "xmlns:xsi" = "http://www.w3.org/2001/XMLSchema-instance", 
@@ -650,11 +652,11 @@ repeat{
 					sep = "")
 			 
 	if(plan.format == 1){
-		saveXML( node.Message, 
+	  XML::saveXML( node.Message, 
 				 file = file.path(paste(path.save, "/", file.name.request, sep = "")),
 				 prefix = prefix)
 
-		saveXML( node.WorkflowContext, 
+	  XML::saveXML( node.WorkflowContext, 
 				 file = file.path(paste(path.save, "/", file.name.plan, sep = "")),
 				 prefix = prefix)
 
@@ -669,7 +671,7 @@ repeat{
 	}else{
     
 	  # Save plan in the new format, according to Steffen's format (Yukihara, Oct. 2014)
-	  saveXML( node.PTTxPlanMd5, 
+	  XML::saveXML( node.PTTxPlanMd5, 
 	           file = file.path(paste(path.save, "/", file.name.plan, sep = "")),
 	           prefix = prefix)
     
