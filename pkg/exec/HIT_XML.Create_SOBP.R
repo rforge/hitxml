@@ -8,6 +8,7 @@
 
 rm(list = ls())
 library(HITXML)
+library(lattice)
 
 #' START OF USER INPUT
 
@@ -18,19 +19,19 @@ rbe.path <- "D:/04 - Risoe, DKFZ/03 - Methodik/11-20/20 - TRiP/04 - TRiP Basic D
 
 # minimal and maximal depth in cm
 min.depth.g.cm2         <- 10
-max.depth.g.cm2         <- 15
+max.depth.g.cm2         <- 16
 
 step.size.g.cm2         <- 0.025
 IES.step                <- 3
-plateau.dose.Gy         <- .1
+plateau.dose.Gy         <- 2
 
 output.LET              <- TRUE
-LET.step.size.g.cm2     <- 0.25
+LET.step.size.g.cm2     <- 0.125
 
-biol.optimization       <- FALSE
+biol.optimization       <- TRUE
 rbe.file                <- "custom7um.rbe"
 n.biol.opt.steps        <- 1
-bio.step.size.g.cm2     <- 0.25
+bio.step.size.g.cm2     <- 0.125
 
 write.SOBP              <- TRUE
 
@@ -170,6 +171,12 @@ if(biol.optimization | output.LET){
     primaries                   <- sapply(eff.spectra.at.depth,
                                           spectrum.total.n.particles,
                                           particle.no = 6012)
+    Z1                          <- sapply(eff.spectra.at.depth,
+                                          spectrum.total.n.particles,
+                                          particle.no = 1002)
+    Z2                          <- sapply(eff.spectra.at.depth,
+                                          spectrum.total.n.particles,
+                                          particle.no = 2004)
     fLET.total                  <- sapply(eff.spectra.at.depth,
                                           spectrum.fLET)/10
     fLET.primaries              <- sapply(eff.spectra.at.depth,
@@ -190,7 +197,7 @@ if(biol.optimization | output.LET){
 
     rbe[LET.depths.g.cm2 > max.depth.g.cm2 *1.5] <- NA
     
-    xyplot(total + primaries ~ LET.depths.g.cm2,
+    xyplot(total + primaries + Z1 + Z2 ~ LET.depths.g.cm2,
            grid = TRUE,
            type = "l",
            auto.key = list(space = "right"),
