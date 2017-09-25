@@ -25,9 +25,9 @@ ll   <- lapply(IESs,
                                 as.numeric(XML::xmlGetAttr(y, name = "particles"))
                               })
          return(data.frame(energy.GeV = energy.GeV,
+                           focus.cm = focus.cm,
                            pos.x.cm = pos.x.cm,
                            pos.y.cm = pos.y.cm,
-                           focus.cm = focus.cm,
                            particles = particles))
        })
 
@@ -37,9 +37,9 @@ tapply(df$particles, df$energy.GeV, unique)
 
 df2 <- df[,
        .(energy.GeV = unique(energy.GeV),
+         focus.cm  = unique(focus.cm),
          pos.x.cm  = 0.0,
          pos.y.cm  = 0.0,
-         focus.cm  = unique(focus.cm),
          total.particles = sum(particles)),
        by = .(energy.GeV)]
 
