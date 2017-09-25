@@ -65,7 +65,7 @@ HX.optimize.field <- function( par.start,
 					    cex = 10 / sqrt(nrow(optim.field$beam.spot.grid)))
         	}
         }
-		
+        
         plot(
         	xyplot( y.mm ~ x.mm,
 				optim.field$beam.spot.grid,
@@ -81,7 +81,7 @@ HX.optimize.field <- function( par.start,
 				aspect = 1)
 		)		
 		# Plot full field
- 		
+         
 		y.line.mm       <- min(abs(m[,2]))
 		custom.panel    <- function(...){
             panel.levelplot(...)
@@ -103,7 +103,7 @@ HX.optimize.field <- function( par.start,
 			      aspect    = 1)
         )
 		
- 		# Plot cross section
+		# Plot cross section
  		plot(
 		xyplot(m[,3]*100 ~ m[,1],
 		       type   = 's',
@@ -117,6 +117,11 @@ HX.optimize.field <- function( par.start,
  		m               <- HX.compute.field( beam.spot.grid = optim.field$beam.spot.grid, 
  	    	                                 field.mm       = c( -field.par[1]/2, -field.par[1]/2, field.par[1]/2, field.par[1]/2),
 											 resolution.mm  = resolution.mm)
+ 		
+ 		if(fluence.cm2 == 0){
+ 		  stop("Problem with zero fluence!")
+ 		}
+ 		
  		plot(
 		levelplot( (m[,3]*100 - fluence.cm2) /fluence.cm2 * 100 ~ m[,1]*m[,2],
 			      panel = custom.panel,
@@ -125,8 +130,7 @@ HX.optimize.field <- function( par.start,
 			      main      = paste('Optimized plan - homogenous central area (IES no. ', n.IES, ')', sep = ""),
 			      sub       = 'deviation from requested fluence / %'),
 		)
-			  
+ 		
 	}
-
     return(optim.field)
 }

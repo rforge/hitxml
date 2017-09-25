@@ -1,15 +1,19 @@
 HX.construct.field.square <- function(d.mm, 
                                       field.size.mm,
-									  focus.FWHM.mm){
+									                    focus.FWHM.mm){
 
 	## Construct beam spot position grid
 	# The minimum side length is homogenous field + focus width
+  # Always use odd number of spots (to create overlap in beam's eye view)
 	min.grid.size.mm   <- field.size.mm + 2 * focus.FWHM.mm
-    n.steps            <- floor(min.grid.size.mm / d.mm) + 1
-    grid.size.mm       <- n.steps * d.mm
-    steps.mm           <- seq(from         = -grid.size.mm/2,
-                              to           = grid.size.mm/2,
-                              by           = d.mm) 
+  n.steps            <- floor(min.grid.size.mm / d.mm)
+  if(n.steps%%2 == 1){
+    n.steps <- n.steps - 1
+  } 
+  grid.size.mm       <- n.steps * d.mm
+  steps.mm           <- seq(from         = -grid.size.mm/2,
+                            to           = grid.size.mm/2,
+                            by           = d.mm) 
     
     # Dataframe holds beam spot positions, focus size and particle numbers
     # It anticipates the structure of the HIT XML plan / record files

@@ -4,7 +4,7 @@ library(XML)
 library(ggplot2)
 library(data.table)
 
-doc <- XML::xmlTreeParse("bio_c_1Gy_8mm_35mm_1x25_schmal.xml", useInternalNodes = TRUE)
+doc <- XML::xmlTreeParse("SOBP_12C.xml", useInternalNodes = TRUE)
 
 IESs <- XML::getNodeSet(doc, path = "//IES")
 ll   <- lapply(IESs,

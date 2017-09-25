@@ -15,7 +15,7 @@ SIS.file           <- "12C_1.6.2008.sis"
 particle.name      <- "12C"
 #particle.name      <- "PROTON"
 
-expid               <- "sg83202"
+expid               <- "sg83212"
 SOBP.file           <- paste0("SOBP_", expid, "_simple.dat")
 fluence.scaling.factor <- 1.0 # Use if you want to change the fluence in a biologically optimized plan (as changing the
                               # biological dose will not scale the phys. dose / fluence linearily)
@@ -26,7 +26,7 @@ name.exp.run       <- expid
 rifi               <- c("None", "3 mm")[1]
 field.shape        <- c("square", "circular")[1]
 field.side.size.mm <- 100
-spot.distance.mm   <- 2
+spot.distance.mm   <- 3
 
 focus.no           <- 3
 
@@ -508,6 +508,6 @@ write.table(df.SOBP.feild,
             eol       = "\r\n" )
 cat("Saved FLUKA input to ", file.name, "\n")
 
-
+alarm()
 
 

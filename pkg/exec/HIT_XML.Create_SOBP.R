@@ -22,14 +22,14 @@ spc.path <- "D:/04 - Risoe, DKFZ/03 - Methodik/11-20/20 - TRiP/04 - TRiP Basic D
 rbe.path <- "D:/04 - Risoe, DKFZ/03 - Methodik/11-20/20 - TRiP/04 - TRiP Basic Data/HIT/03 - TRiP98DATA_HIT-20131120/RBE"
 
 # minimal and maximal depth in cm
-min.depth.g.cm2         <- 12
+min.depth.g.cm2         <- 4
 max.depth.g.cm2         <- 16
-expid                   <- "sg83204"
+expid                   <- "sg83212"
 
 offset.g.cm2            <- 0.289
 
-step.size.g.cm2         <- 0.025
-IES.step                <- 1
+step.size.g.cm2         <- 0.02
+IES.step                <- 2
 plateau.dose.Gy         <- 2
 
 output.LET              <- FALSE
@@ -74,24 +74,34 @@ plateau.dose.per.primary.Gy <- mean(get.dose.Gy.from.set(DDD.set      = ddds.sub
                                                          depths.g.cm2 = depths.g.cm2))
 
 # Objective function: sum of squares (or higher) of deviation to dose set
+# p <- rep( 1, no.IES) + seq(0, 1, length.out = no.IES)
+# DDD.set <- ddds.sub
+# dose.set.Gy <- plateau.dose.per.primary.Gy
+
 dose.dev <- function(p, depths.g.cm2, DDD.set, dose.set.Gy){
   doses <- get.dose.Gy.from.set(DDD.set      = DDD.set, 
                                 depths.g.cm2 = depths.g.cm2, 
                                 weights      = p)
-  log10(sum( (doses - dose.set.Gy)^10))
+  idx <- 1:length(depths.g.cm2)
+  
+#  weights.of.weights <- (idx - mean(idx))^2
+#  cost <- log10(sum( weights.of.weights * (doses - dose.set.Gy)^2))
+  cost <- log10(sum((doses - dose.set.Gy)^2))
+  return(cost)
 }
-
 
 # minimize objective function to find weights
 rel.weights       <- optim( fn             = dose.dev, 
-                            par            = rep( 1, no.IES),
+                            par            = rep( 1, no.IES) + seq(0, 1, length.out = no.IES),
                             depths.g.cm2   = depths.g.cm2,
                             DDD.set        = ddds.sub,
                             dose.set.Gy    = plateau.dose.per.primary.Gy,
                             method         = "L-BFGS-B",
-                            lower          = rep(0.0, no.IES),
+                            lower          = rep(0.2, no.IES),
+                            upper          = rep(10, no.IES),
                             control        = list(trace = TRUE, 
-                                                  maxit = 200))$par
+                                                  maxit = 300,
+                                                  factr = 1e9))$par
 
 # Scale number of primaries to get actual weights
 fluence.factor <- plateau.dose.Gy / plateau.dose.per.primary.Gy
@@ -320,7 +330,8 @@ if(biol.optimization | output.LET){
                                 method         = "L-BFGS-B",
                                 lower          = rep(0.0, no.IES),
                                 control        = list(trace = TRUE, 
-                                                      maxit = 200))$par
+                                                      maxit = 200,
+                                                      reltol = 1e-3))$par
     # Scale number of primaries to get actual weights
     fluence.factor <- plateau.dose.Gy / mean(plateau.dose.per.primary.Gy)
     total.weights  <- rel.weights * fluence.factor
@@ -442,3 +453,4 @@ if(write.SOBP){
   cat("Resulting weights written to ", file.name, "\n")
 }
 
+alarm()
