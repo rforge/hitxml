@@ -5,6 +5,8 @@
 #' Original version by Grischa Klimpki, 2014
 #' adapted to HIT_XML package and extended to 
 #' biological optization by Steffen Greilich, 2015-07
+#' 
+#' Revised 2017-09-25
 
 rm(list = ls())
 library(HITXML)
@@ -13,22 +15,27 @@ library(lattice)
 #' START OF USER INPUT
 
 # path to spc and ddd data
-ddd.path <- "D:/04 - Risoe, DKFZ/03 - Methodik/11-20/20 - TRiP/04 - TRiP Basic Data/HIT/03 - TRiP98DATA_HIT-20131120/DDD/12C/RF3MM"
-spc.path <- "D:/04 - Risoe, DKFZ/03 - Methodik/11-20/20 - TRiP/04 - TRiP Basic Data/HIT/03 - TRiP98DATA_HIT-20131120/SPC/12C/RF3MM"
+#ddd.path <- "D:/04 - Risoe, DKFZ/03 - Methodik/11-20/20 - TRiP/04 - TRiP Basic Data/HIT/03 - TRiP98DATA_HIT-20131120/DDD/p/RF0MM/"
+#spc.path <- "D:/04 - Risoe, DKFZ/03 - Methodik/11-20/20 - TRiP/04 - TRiP Basic Data/HIT/03 - TRiP98DATA_HIT-20131120/SPC/p/RF0MM/"
+ddd.path <- "D:/04 - Risoe, DKFZ/03 - Methodik/11-20/20 - TRiP/04 - TRiP Basic Data/HIT/03 - TRiP98DATA_HIT-20131120/DDD/12C/RF3MM/"
+spc.path <- "D:/04 - Risoe, DKFZ/03 - Methodik/11-20/20 - TRiP/04 - TRiP Basic Data/HIT/03 - TRiP98DATA_HIT-20131120/SPC/12C/RF3MM/"
 rbe.path <- "D:/04 - Risoe, DKFZ/03 - Methodik/11-20/20 - TRiP/04 - TRiP Basic Data/HIT/03 - TRiP98DATA_HIT-20131120/RBE"
 
 # minimal and maximal depth in cm
-min.depth.g.cm2         <- 10
+min.depth.g.cm2         <- 12
 max.depth.g.cm2         <- 16
+expid                   <- "sg83204"
+
+offset.g.cm2            <- 0.289
 
 step.size.g.cm2         <- 0.025
-IES.step                <- 3
+IES.step                <- 1
 plateau.dose.Gy         <- 2
 
-output.LET              <- TRUE
+output.LET              <- FALSE
 LET.step.size.g.cm2     <- 0.125
 
-biol.optimization       <- TRUE
+biol.optimization       <- FALSE
 rbe.file                <- "custom7um.rbe"
 n.biol.opt.steps        <- 1
 bio.step.size.g.cm2     <- 0.125
@@ -39,15 +46,18 @@ plot.range              <- 2.0
 
 #' END OF USER INPUT
 
+# Add offset to SOBP range
+min.depth.g.cm2         <- min.depth.g.cm2 + offset.g.cm2
+max.depth.g.cm2         <- max.depth.g.cm2 + offset.g.cm2
 
 # read in DDD files  
 ddds              <- dataDDDset(ddd.path = ddd.path)
 
 # get IESs necessary
-jj                <- ddds@peak.positions.g.cm2 >= min.depth.g.cm2 & ddds@peak.positions.g.cm2 <= max.depth.g.cm2 &
+jj                <- ddds@peak.positions.g.cm2 > min.depth.g.cm2 & ddds@peak.positions.g.cm2 <= max.depth.g.cm2 &
                              rep(c(TRUE, rep(FALSE, IES.step - 1)), length.out = length(ddds@projectiles))
-jj[head(which(jj), 1)-IES.step] <- TRUE
-jj[tail(which(jj), 1)+IES.step] <- TRUE
+jj[head(which(jj), 1)] <- TRUE
+jj[tail(which(jj), 1)] <- TRUE
 no.IES            <- sum(jj)
 ddds.sub          <- ddds[which(jj)]
 
@@ -93,10 +103,12 @@ plot.depths.g.cm2       <- seq( from       = 0.0,
                                 to         = max(ddds.sub@peak.positions.g.cm2) * plot.range, 
                                 by         = step.size.g.cm2)
 
-plot.SOBP(plot.ddds = ddds.sub, 
-          plot.depths.g.cm2 = plot.depths.g.cm2, 
-          plot.weights = total.weights, 
-          "(phys.opt.)")
+print(plot.SOBP(plot.ddds = ddds.sub, 
+               plot.depths.g.cm2 = plot.depths.g.cm2, 
+               plot.weights = total.weights, 
+               "(phys.opt.)",
+               start.depth.cm = min.depth.g.cm2,
+               end.depth.cm = max.depth.g.cm2))
 
 
 #################################
@@ -420,11 +432,13 @@ if(write.SOBP){
                                    y.cm    = rep(0.0, no.IES),
                                    FWHM.cm = rep(0.1, no.IES),
                                    fluence = as.integer(total.weights))
+  file.name <- paste0("SOBP_", expid, "_simple.dat")
   write.table(df,
-              file = "SOBP.dat",
+              file = file.name,
               quote = FALSE,
               row.names = FALSE,
               col.names = FALSE,
               eol       = "\r\n" )
+  cat("Resulting weights written to ", file.name, "\n")
 }
 

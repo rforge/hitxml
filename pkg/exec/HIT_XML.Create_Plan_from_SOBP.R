@@ -11,18 +11,22 @@ library(libamtrack)
 
 SIS.path           <- "D://04 - Risoe, DKFZ//03 - Methodik//11-20//20 - TRiP//04 - TRiP Basic Data//HIT//03 - TRiP98DATA_HIT-20131120//SIS"
 SIS.file           <- "12C_1.6.2008.sis"
+#SIS.file           <- "1H_1.1.2009.sis"
+particle.name      <- "12C"
+#particle.name      <- "PROTON"
 
-SOBP.file          <- "SOBP.dat"
+expid               <- "sg83202"
+SOBP.file           <- paste0("SOBP_", expid, "_simple.dat")
 fluence.scaling.factor <- 1.0 # Use if you want to change the fluence in a biologically optimized plan (as changing the
                               # biological dose will not scale the phys. dose / fluence linearily)
-particle.name      <- "12C"
 
-name.exp.series    <- "SOBP"
-name.exp.run       <- "SOBP_12C"
+name.exp.series    <- expid
+name.exp.run       <- expid
 
 rifi               <- c("None", "3 mm")[1]
 field.shape        <- c("square", "circular")[1]
-field.side.size.mm <- 50
+field.side.size.mm <- 100
+spot.distance.mm   <- 2
 
 focus.no           <- 3
 
@@ -34,7 +38,7 @@ program.version <- packageDescription("HITXML")$Version
 program.date    <- packageDescription("HITXML")$Date
 
 # Translate user input
-chosen.particle  <- which(particle.name == c("1H", "4He", "12C", "16O"))
+chosen.particle  <- which(particle.name == c("PROTON", "4He", "12C", "16O"))
 chosen.rifi.idx  <- which(c("None", "3 mm") == rifi)
 chosen.field.idx <- which(c("square", "circular") == field.shape)
 
@@ -45,7 +49,8 @@ user.input <- list( basic = list( date             = format(Sys.Date(), "%Y%m%d"
                                   chosen.particle  = chosen.particle,
                                   chosen.rifi.idx  = chosen.rifi.idx,        # c("None", "3 mm")
                                   intensity        = 1,
-                                  resolution.mm    = 2),
+                                  resolution.mm    = 2,
+                                  spot.distance.mm = spot.distance.mm),
                     
                     fixed = list( time             = format(Sys.time(), "%Y-%m-%dT%H:%M:%S.1111111+02:00"), # Due to POSIX/Windows problem hardcode fractions of second and time zone for timestamp, TODO: Fix by more flexible solution
                                   room.name        = "Room4",
@@ -154,6 +159,7 @@ for(cur.IES in 1:n.IES){
                                              fluence.cm2   = fluence.cm2,
                                              N.min         = df.particles$minParticles[user.input$basic$chosen.particle],
                                              resolution.mm = user.input$basic$resolution.mm,
+                                             spot.distance.mm = spot.distance.mm,
                                              n.IES         = cur.IES,
                                              plot          = TRUE)$beam.spot.grid
   
@@ -493,14 +499,14 @@ cat("\nSaved plan file ",
 
 
 # saving the SOBP.dat version of the xml plan for FLUKA simulations
-
+file.name <- paste0("SOBP_", expid, ".dat")
 write.table(df.SOBP.feild,
-            file = "SOBP-optimized.dat",
+            file = file.name,
             quote = FALSE,
             row.names = FALSE,
             col.names = FALSE,
             eol       = "\r\n" )
-
+cat("Saved FLUKA input to ", file.name, "\n")
 
 
 

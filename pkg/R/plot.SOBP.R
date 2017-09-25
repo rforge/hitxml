@@ -1,4 +1,4 @@
-plot.SOBP <- function(plot.ddds, plot.depths.g.cm2, plot.weights, add.comment){
+plot.SOBP <- function(plot.ddds, plot.depths.g.cm2, plot.weights, add.comment, start.depth.cm = 0, end.depth.cm = 0){
   plot.no.IES             <- length(plot.ddds@beam.energies.MeV.u)
   
   D.Gy                    <- get.dose.Gy.from.set( DDD.set      = plot.ddds, 
@@ -25,6 +25,11 @@ plot.SOBP <- function(plot.ddds, plot.depths.g.cm2, plot.weights, add.comment){
          xlab = list("distal depth /cm", cex=1.5),
          ylab = list("total dose / Gy", cex=1.5),
          scale = list(cex = 1.25),
+         panel = function(...){
+                  panel.xyplot(...)
+                  panel.abline(v = start.depth.cm, lty = 2)
+                  panel.abline(v = end.depth.cm, lty = 2)
+         },
          main = list(paste0("SOBP (single field, ",
                             unique(ddds.sub@projectiles),
                             ") consisting of ", 

@@ -6,11 +6,14 @@ HX.optimize.field <- function( par.start,
 							   field.par,
 							   n.IES,
 							   resolution.mm = 1,
+							   spot.distance.mm,
 							   plot = FALSE){
 
 	# Do actual optimization using cost.function
 	# DEBUG: d.mm <- d.start.mm
-	res <- optim( par            = par.start,
+  # If positive value for spot distance is given, don't optimize
+	if(spot.distance.mm <= 0){
+	  res <- optim( par            = par.start,
 	              fn             = HX.cost.function,
 	              gr             = NULL,
 	              field.shape    = field.shape,
@@ -23,8 +26,12 @@ HX.optimize.field <- function( par.start,
 	              lower          = 1,
 	              upper          = 2 * focus.FWHM.mm,
 			          control        = list( factr = 1e9))
-	
-	par             <- res$par
+  	par             <- res$par
+	}else{
+	  cat("Using fixed spot distance of ", spot.distance.mm, " mm\n")
+	  par             <- c(spot.distance.mm, 0) 
+	}
+  
 	optim.field     <- HX.construct.field(field.shape                = field.shape,
 	                                      par                        = par, 
 	                                      focus.FWHM.mm              = focus.FWHM.mm, 

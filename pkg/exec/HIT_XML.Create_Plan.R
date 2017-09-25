@@ -51,7 +51,8 @@ user.input <- list( basic = list( date             = 20160920,
                                   chosen.particle  = 1,        # c("Protons", "Helium-4 ions", "Carbon ions", "Oxygen ions")
                                   chosen.rifi.idx  = 1,        # c("None", "3 mm")
                                   intensity        = 1,
-                                  resolution.mm    = 1),
+                                  resolution.mm    = 1,
+                                  spot.distance.mm = -1),      # If <= 0, do spot distance optimization, otherwise use given value
                     
                     fixed = list( time             = format(Sys.time(), "%Y-%m-%dT%H:%M:%S.1111111+02:00"), # Due to POSIX/Windows problem hardcode fractions of second and time zone for timestamp, TODO: Fix by more flexible solution
                                   room.name        = "Room4",
@@ -248,6 +249,7 @@ repeat{
 												                     fluence.cm2   = fluence.cm2,
 												                     N.min         = df.particles$minParticles[user.input$basic$chosen.particle],
 												                     resolution.mm = user.input$basic$resolution.mm,
+												                     spot.distance.mm = user.input$basic$spot.distance.mm,
 												                     n.IES         = n.IES,
 												                     plot          = TRUE)$beam.spot.grid
 

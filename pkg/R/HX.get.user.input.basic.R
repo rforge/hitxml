@@ -44,6 +44,12 @@ HX.get.user.input.basic <- function( user.input,
     user.input$basic$intensity          <- 0
   }
   
+  # Choose spot size
+  user.input$basic$spot.distance.mm <- as.numeric(HX.prompt.user( prompt        = "Give fix spot distance in mm, or value <= 0 if distance should be optimized (",
+                                                                        default   = default.input$basic$resolution.mm,
+                                                                        input.con = input.con))
+  return( user.input )
+  
   # Choose resolution to optimize within homogenous field
   user.input$basic$resolution.mm          <- as.numeric(HX.prompt.user( prompt        = "Resolution for optimizing homogeneity - in mm, depending e.g. on your detector resolution (if unsure \'1\' is a good guess",
                                                              default   = default.input$basic$resolution.mm,
