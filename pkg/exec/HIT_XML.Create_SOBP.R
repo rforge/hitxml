@@ -22,9 +22,9 @@ spc.path <- "D:/04 - Risoe, DKFZ/03 - Methodik/11-20/20 - TRiP/04 - TRiP Basic D
 rbe.path <- "D:/04 - Risoe, DKFZ/03 - Methodik/11-20/20 - TRiP/04 - TRiP Basic Data/HIT/03 - TRiP98DATA_HIT-20131120/RBE"
 
 # minimal and maximal depth in cm
-min.depth.g.cm2         <- 4
-max.depth.g.cm2         <- 16
-expid                   <- "sg83212"
+min.depth.g.cm2         <- 22
+max.depth.g.cm2         <- 30
+expid                   <- "sg83408"
 
 offset.g.cm2            <- 0.289
 
@@ -56,8 +56,8 @@ ddds              <- dataDDDset(ddd.path = ddd.path)
 # get IESs necessary
 jj                <- ddds@peak.positions.g.cm2 > min.depth.g.cm2 & ddds@peak.positions.g.cm2 <= max.depth.g.cm2 &
                              rep(c(TRUE, rep(FALSE, IES.step - 1)), length.out = length(ddds@projectiles))
-jj[head(which(jj), 1)] <- TRUE
-jj[tail(which(jj), 1)] <- TRUE
+jj[head(which(jj), 1)-IES.step] <- TRUE
+jj[tail(which(jj), 1)+IES.step] <- TRUE
 no.IES            <- sum(jj)
 ddds.sub          <- ddds[which(jj)]
 
@@ -97,8 +97,8 @@ rel.weights       <- optim( fn             = dose.dev,
                             DDD.set        = ddds.sub,
                             dose.set.Gy    = plateau.dose.per.primary.Gy,
                             method         = "L-BFGS-B",
-                            lower          = rep(0.2, no.IES),
-                            upper          = rep(10, no.IES),
+                            lower          = rep(0.1, no.IES),
+                            upper          = rep(20, no.IES),
                             control        = list(trace = TRUE, 
                                                   maxit = 300,
                                                   factr = 1e9))$par
