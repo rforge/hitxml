@@ -7,7 +7,7 @@ HX.construct.field <- function(field.shape,
     
     switch( match(field.shape, c("square", "circle", "shells")),
 	        beam.spot.grid <- HX.construct.field.square( d.mm                       = par[1], 
-		                                                   field.size.mm              = field.par[1],
+		                                                   field.size.mm              = field.par,
 									                                     focus.FWHM.mm              = focus.FWHM.mm),
 	        beam.spot.grid <- HX.construct.field.circle( r.step.mm                  = par[1], 
 		                                                   angular.step.mm            = par[2],
@@ -32,11 +32,16 @@ HX.construct.field <- function(field.shape,
     if( !is.null(compute.with.resolution.mm)){
     	m                  <- HX.compute.field(  beam.spot.grid = beam.spot.grid, 
                                                resolution.mm  = compute.with.resolution.mm)
-		switch( match(field.shape, c("square", "circle", "shells")),
+		
+    	if(field.shape == "square" & length(field.par) == 1){
+  	    field.par <- c(field.par, field.par)   
+    	}
+    	
+    	switch( match(field.shape, c("square", "circle", "shells")),
 				ii <- (m[,1] >= -field.par[1]/2) &
 				      (m[,1] <=  field.par[1]/2) &
-					  (m[,2] >= -field.par[1]/2) &
-					  (m[,2] <=  field.par[1]/2),
+					  (m[,2] >= -field.par[2]/2) &
+					  (m[,2] <=  field.par[2]/2),
 				ii <- (sqrt(m[,1]^2+m[,2]^2) <= field.par[1] + field.par[2]) &
 				      (sqrt(m[,1]^2+m[,2]^2) >= field.par[2]),
 				ii <- TRUE,

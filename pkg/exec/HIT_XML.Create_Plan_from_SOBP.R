@@ -15,23 +15,27 @@ SIS.file           <- "12C_1.6.2008.sis"
 particle.name      <- "12C"
 #particle.name      <- "PROTON"
 
-expids              <- c(paste0("sg8320", seq(2, 12, by = 2)),
-                         paste0("sg8340", seq(2, 12, by = 2)),
-                         paste0("sg8360", seq(2, 6, by = 2)))
+#expids              <- c(paste0("sg832", sprintf("%02d", seq(12, 12, by = 2))),
+#                         paste0("sg834", sprintf("%02d", seq(2, 12, by = 2))),
+#                         paste0("sg836", sprintf("%02d", seq(2, 6, by = 2))))
 
-fluence.scaling.factor <- 1.0 # Use if you want to change the fluence in a biologically optimized plan (as changing the
+expids              <- c("0204", "1921") # c(paste0("sg831", sprintf("%02d", seq(2, 12, by = 2))))
+
+fluence.scaling.factor <- 1 # Use if you want to change the fluence in a biologically optimized plan (as changing the
                               # biological dose will not scale the phys. dose / fluence linearily)
+minParticles       <- c(165000, 0, 500, 0) # H, He, C, O. Default: c(165000, 0, 5000, 0)
 rifi               <- c("None", "3 mm")[1]
 field.shape        <- c("square", "circular")[1]
-field.side.size.mm <- 100
-spot.distance.mm   <- 3
+field.side.size.mm <- c(85, 45) # Single value for quadratic field, vector (x,y) for rectangular
+spot.distance.mm   <- 0
 
-focus.no           <- 3
+focus.no           <- 4
 
 plan.format        <- 2 # plan format always 2 == new
 
 #' USER INPUT END ####
 for(expid in expids){
+  # expid <- expids[1]
   SOBP.file           <- paste0("SOBP_", expid, "_simple.dat")
   
   name.exp.series    <- expid
@@ -75,7 +79,7 @@ for(expid in expids){
                               mass               = c(1,4,12,16),
                               charge             = c(1,2,6,8),
                               atomicNumber       = c(1,2,6,8),
-                              minParticles       = c(165000, 0, 5000, 0),
+                              minParticles       = minParticles,
                               stringsAsFactors   = FALSE)
   df.particles$particle.no <- AT.particle.no.from.Z.and.A(Z = df.particles$charge,
                                                           A = df.particles$mass)$particle.no
@@ -95,6 +99,7 @@ for(expid in expids){
   
   
   # Read SOBP.dat and fill in parameters
+  cat("Reading file ", SOBP.file, "\n")
   SOBP <- read.table( SOBP.file,
                       col.names = c("beam.energy.MeV.u", "V2", "V3", "V4", "fluence.cm2"))[,c(1,5)]
   SOBP$beam.energy.MeV.u <- SOBP$beam.energy.MeV.u * 1000

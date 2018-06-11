@@ -68,7 +68,7 @@ get.dose.Gy.from.set <- function(DDD.set, depths.g.cm2, weights){
     weights <- rep(1.0, n.ddd)
   }
   
-  doses     <- matrix( unlist( lapply( 1:n.ddd, 
+  doses     <- matrix( unlist( mclapply( 1:n.ddd, 
                                        function(i, x, y){ get.dose.Gy( get.ddd( x, 
                                                                                 x@beam.energies.MeV.u[i]), 
                                                                         y)},

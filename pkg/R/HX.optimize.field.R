@@ -66,6 +66,9 @@ HX.optimize.field <- function( par.start,
         	}
         }
         
+        aspect <- (max(optim.field$beam.spot.grid$y.mm) - min(optim.field$beam.spot.grid$y.mm)) /
+                     (max(optim.field$beam.spot.grid$x.mm) - min(optim.field$beam.spot.grid$x.mm))
+
         plot(
         	xyplot( y.mm ~ x.mm,
 				optim.field$beam.spot.grid,
@@ -78,7 +81,7 @@ HX.optimize.field <- function( par.start,
 				ylim = c(min(m[,2]), max(m[,2])),
 			    main = paste('Optimized plan - entire field (IES no. ', n.IES, ')', sep = ""), 
 			    sub  = 'beam spot positions and numbers',
-				aspect = 1)
+				aspect = abs(aspect))
 		)		
 		# Plot full field
          
@@ -100,7 +103,7 @@ HX.optimize.field <- function( par.start,
 			      ylab      = 'y / mm',
 			      main      = paste('Optimized plan - entire field (IES no. ', n.IES, ')', sep = ""),
 			      sub       = 'fluence / (1/cm2)',
-			      aspect    = 1)
+			      aspect    = aspect)
         )
 		
 		# Plot cross section
@@ -114,8 +117,11 @@ HX.optimize.field <- function( par.start,
         )
 	    
 		# Plot homogenous part, with relative deviation from requested fluence
+ 		if(field.shape == "square" & length(field.par) == 1){
+ 		  field.par <- c(field.par, field.par)
+ 		}
  		m               <- HX.compute.field( beam.spot.grid = optim.field$beam.spot.grid, 
- 	    	                                 field.mm       = c( -field.par[1]/2, -field.par[1]/2, field.par[1]/2, field.par[1]/2),
+ 	    	                                 field.mm       = c( -field.par[1]/2, -field.par[2]/2, field.par[1]/2, field.par[2]/2),
 											 resolution.mm  = resolution.mm)
  		
  		if(fluence.cm2 == 0){

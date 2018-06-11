@@ -4,7 +4,12 @@ library(XML)
 library(ggplot2)
 library(data.table)
 
-doc <- XML::xmlTreeParse("SOBP_12C.xml", useInternalNodes = TRUE)
+# USER SETTINGS ####
+expid <- "SOBP_1H"
+
+
+# READ AND PROCESS ####
+doc <- XML::xmlTreeParse(paste0(expid, ".xml"), useInternalNodes = TRUE)
 
 IESs <- XML::getNodeSet(doc, path = "//IES")
 ll   <- lapply(IESs,
@@ -50,14 +55,14 @@ ggplot(df, aes(x = pos.x.cm, y = pos.y.cm)) +
 
 
 write.table(df,
-            file = "SOBP_from_Plan.dat",
+            file = paste0(expid, "_from_plan.dat"),
             quote = FALSE,
             row.names = FALSE,
             col.names = FALSE,
             eol       = "\r\n" )
 
 write.table(df2,
-            file = "SOBP_from_Plan_simple.dat",
+            file = paste0(expid, "_from_plan_simple.dat"), 
             quote = FALSE,
             row.names = FALSE,
             col.names = FALSE,

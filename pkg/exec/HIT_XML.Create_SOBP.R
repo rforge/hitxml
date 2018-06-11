@@ -11,6 +11,8 @@
 rm(list = ls())
 library(HITXML)
 library(lattice)
+library(parallel)
+
 
 #' START OF USER INPUT
 
@@ -22,23 +24,23 @@ spc.path <- "D:/04 - Risoe, DKFZ/03 - Methodik/11-20/20 - TRiP/04 - TRiP Basic D
 rbe.path <- "D:/04 - Risoe, DKFZ/03 - Methodik/11-20/20 - TRiP/04 - TRiP Basic Data/HIT/03 - TRiP98DATA_HIT-20131120/RBE"
 
 # minimal and maximal depth in cm
-min.depth.g.cm2         <- 22
-max.depth.g.cm2         <- 30
-expid                   <- "sg83408"
+min.depth.g.cm2         <- 02
+max.depth.g.cm2         <- 03.9
+expid                   <- "SOBP0204b"
 
 offset.g.cm2            <- 0.289
 
-step.size.g.cm2         <- 0.02
+step.size.g.cm2         <- 0.025
 IES.step                <- 2
-plateau.dose.Gy         <- 2
+plateau.dose.Gy         <- 1
 
-output.LET              <- FALSE
+output.LET              <- TRUE
 LET.step.size.g.cm2     <- 0.125
 
 biol.optimization       <- FALSE
-rbe.file                <- "custom7um.rbe"
-n.biol.opt.steps        <- 1
-bio.step.size.g.cm2     <- 0.125
+rbe.file                <- "chordom02.rbe"
+n.biol.opt.steps        <- 5
+bio.step.size.g.cm2     <- 0.25
 
 write.SOBP              <- TRUE
 
@@ -134,10 +136,10 @@ if(biol.optimization | output.LET){
   # than selected IESs. dataSPCs will be interpolated
   # between the adjacent energies of the available
   # energy sample point in the spc set
-  ddds.spc          <- lapply(ddds.sub@beam.energies.MeV.u, 
-                              function(x, s){
-                                get.spc(s, x)},
-                              spcs)
+  ddds.spc          <- mclapply(ddds.sub@beam.energies.MeV.u, 
+                                function(x, s){
+                                  get.spc(s, x)},
+                                spcs)
   # save(ddds.spc, file = "ddds.spc.rda")
   # load("ddds.spc.rda")
   
@@ -155,19 +157,19 @@ if(biol.optimization | output.LET){
     # of dataSpectrum objects - representing the spectra
     # from the individual IESs (first index) contributing at specific depth (second index)
     # TODO: Move this format to its own class and adapt lapply's below
-    spectra.at.depth  <- lapply(1:no.IES,
-                                function(i, s, d){
-                                  cat("Getting spectra from IES", i, "\n")
-                                  dataSpectrum(s[[i]], d)},
-                                s = ddds.spc,
-                                d = LET.depths.g.cm2)
+    spectra.at.depth  <- mclapply(1:no.IES,
+                                  function(i, s, d){
+                                    cat("Getting spectra from IES", i, "\n")
+                                    dataSpectrum(s[[i]], d)},
+                                  s = ddds.spc,
+                                  d = LET.depths.g.cm2)
     # save(spectra.at.depth, file = "sad.rda")
     # load("sad.rda")
     
-    w.spectra.at.depth  <- lapply(1:no.IES,
-                                  function(i, s, w){
-                                    cat("Weighting spectra from IES", i, "\n")
-                                    lapply(1:length(s[[i]]),
+    w.spectra.at.depth  <- mclapply(1:no.IES,
+                                    function(i, s, w){
+                                      cat("Weighting spectra from IES", i, "\n")
+                                      lapply(1:length(s[[i]]),
                                            function(j, ss, ww){
                                              ss[[j]] * ww},
                                            ss = s[[i]],
@@ -175,7 +177,7 @@ if(biol.optimization | output.LET){
                                   s = spectra.at.depth,
                                   w = total.weights)
     
-    eff.spectra.at.depth <- lapply(1:length(LET.depths.g.cm2),
+    eff.spectra.at.depth <- mclapply(1:length(LET.depths.g.cm2),
                                    function(i, s, n){
                                      cat("Adding spectra for depth", i, "\n")
                                      ss <- s[[1]][[i]]
@@ -263,7 +265,7 @@ if(biol.optimization | output.LET){
   # of dataSpectrum objects - representing the spectra
   # from the individual IESs (first index) contributing at specific depth (second index)
   # TODO: Move this format to its own class and adapt lapply's below
-  spectra.at.depth  <- lapply(1:no.IES,
+  spectra.at.depth  <- mclapply(1:no.IES,
                               function(i, s, d){
                                 cat("Getting spectra from IES", i, "\n")
                                 dataSpectrum(s[[i]], d)},
@@ -278,7 +280,7 @@ if(biol.optimization | output.LET){
   for(biol.opt.step in 1:n.biol.opt.steps){
     # Applies the given weights to all spectra at depths covering SOBP (second index)
     # from respective IESs (first index) 
-    w.spectra.at.depth  <- lapply(1:no.IES,
+    w.spectra.at.depth  <- mclapply(1:no.IES,
                                   function(i, s, w){
                                     cat("Weighting spectra from IES", i, "\n")
                                     lapply(1:length(s[[i]]),
@@ -291,7 +293,7 @@ if(biol.optimization | output.LET){
     
     # Combines (adds) spectra from all IESs (first index) for the depths 
     # covering the SOBP (second index). Spectra can be have been weighted before
-    eff.spectra.at.depth <- lapply(1:length(depths.g.cm2),
+    eff.spectra.at.depth <- mclapply(1:length(depths.g.cm2),
                  function(i, s, n){
                    cat("Adding spectra for depth", i, "\n")
                    ss <- s[[1]][[i]]
@@ -348,14 +350,14 @@ if(biol.optimization | output.LET){
                                   to         = max(ddds.sub@peak.positions.g.cm2) * plot.range, 
                                   by         = bio.step.size.g.cm2)
   
-  spectra.at.depth  <- lapply(1:no.IES,
+  spectra.at.depth  <- mclapply(1:no.IES,
                               function(i, s, d){
                                 cat("Getting spectra from IES", i, "\n")
                                 dataSpectrum(s[[i]], d)},
                               s = ddds.spc,
                               d = bio.depths.g.cm2)
 
-  w.spectra.at.depth  <- lapply(1:no.IES,
+  w.spectra.at.depth  <- mclapply(1:no.IES,
                                 function(i, s, w){
                                   cat("Weighting spectra from IES", i, "\n")
                                   lapply(1:length(s[[i]]),
@@ -366,7 +368,7 @@ if(biol.optimization | output.LET){
                                 s = spectra.at.depth,
                                 w = total.weights)
   
-  eff.spectra.at.depth <- lapply(1:length(bio.depths.g.cm2),
+  eff.spectra.at.depth <- mclapply(1:length(bio.depths.g.cm2),
                                  function(i, s, n){
                                    cat("Adding spectra for depth", i, "\n")
                                    ss <- s[[1]][[i]]
@@ -395,44 +397,44 @@ if(biol.optimization | output.LET){
                                                         rule = 2)$y)
   df.plot$D.biol.Gy <- df.plot$D.phys.Gy * df.plot$RBE
   
-  myyscale.component <- function(...) 
-  { 
-    ans 				              <- yscale.components.default(...) 
-    ans$right 	              <- ans$left 
-    foo 				              <- ans$right$labels$at 
-    ans$right$labels$labels 	<- as.character(foo * 5) 
-    ans 
-  } 
-  
-  xyplot(D.biol.Gy + D.phys.Gy + RBE/5 ~ depth.g.cm2,
-         df.plot,
-         type = "l",
-         xlab = list("depth / (g/cm2)", cex=1.5),
-         ylab = list("Dose / (Gy, GyRBE)", cex=1.5),
-         par.settings=	list( layout.widths=list(right.padding=10)), 
-         yscale.component	= myyscale.component,
-         legend = list(right = list(fun = textGrob, 
-                                    args = list(x = 3, 
-                                                y = 0.5, 
-                                                rot = 90,
-                                                label = "RBE",
-                                                gp=gpar(cex = 1.5, col = "darkgreen"),
-                                                just = "center", 
-                                                default.units = "native", 
-                                                vp = viewport(xscale = c(0, 1), 
-                                                              yscale = c(0, 1))))),
-         scales = list( x = list(cex = 1.25),
-                        y = list(cex = 1.25, 
-                                 relation = "free", 
-                                 rot = 0)),
-         grid = TRUE,
-         main = list(paste0("SOBP (single field, ",
-                            unique(ddds.sub@projectiles),
-                            ") consisting of ", 
-                            no.IES, 
-                            " IESs "), 
-                     cex=1.5),
-         sub  = "NB: HIT isocenter is at 0.289 g/cm2 depth!")
+  # myyscale.component <- function(...) 
+  # { 
+  #   ans 				              <- yscale.components.default(...) 
+  #   ans$right 	              <- ans$left 
+  #   foo 				              <- ans$right$labels$at 
+  #   ans$right$labels$labels 	<- as.character(foo * 5) 
+  #   ans 
+  # } 
+  # 
+  # xyplot(D.biol.Gy + D.phys.Gy + RBE/5 ~ depth.g.cm2,
+  #        df.plot,
+  #        type = "l",
+  #        xlab = list("depth / (g/cm2)", cex=1.5),
+  #        ylab = list("Dose / (Gy, GyRBE)", cex=1.5),
+  #        par.settings=	list( layout.widths=list(right.padding=10)), 
+  #        yscale.component	= myyscale.component,
+  #        legend = list(right = list(fun = textGrob, 
+  #                                   args = list(x = 3, 
+  #                                               y = 0.5, 
+  #                                               rot = 90,
+  #                                               label = "RBE",
+  #                                               gp=gpar(cex = 1.5, col = "darkgreen"),
+  #                                               just = "center", 
+  #                                               default.units = "native", 
+  #                                               vp = viewport(xscale = c(0, 1), 
+  #                                                             yscale = c(0, 1))))),
+  #        scales = list( x = list(cex = 1.25),
+  #                       y = list(cex = 1.25, 
+  #                                relation = "free", 
+  #                                rot = 0)),
+  #        grid = TRUE,
+  #        main = list(paste0("SOBP (single field, ",
+  #                           unique(ddds.sub@projectiles),
+  #                           ") consisting of ", 
+  #                           no.IES, 
+  #                           " IESs "), 
+  #                    cex=1.5),
+  #        sub  = "NB: HIT isocenter is at 0.289 g/cm2 depth!")
 }
 
 ###############
