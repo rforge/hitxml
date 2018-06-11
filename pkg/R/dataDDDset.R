@@ -17,8 +17,8 @@ setClass( Class            = "dataDDDset",
 
 ################################
 # Constructor
-dataDDDset <- function(pattern = "*.ddd", ddd.path = "."){
-
+dataDDDset <- function(pattern = "*", ddd.path = "."){
+    # pattern = "*"; ddd.path = ddd.path
     files <- list.files(path       = ddd.path, 
                         pattern    = pattern,
                         full.names = TRUE)
@@ -28,8 +28,10 @@ dataDDDset <- function(pattern = "*.ddd", ddd.path = "."){
     target.materials       <- character()
     peak.positions.g.cm2   <- numeric()
     densities.g.cm3        <- numeric()
-    DDDs                   <- lapply(files, function(x){ cat("Reading", basename(x), "...\n")
-                                                         dataDDD(x)})
+    DDDs                   <- lapply(files, function(x){
+                                              # x <- files[1]
+                                              cat("Reading", basename(x), "...\n")
+                                              dataDDD(x)})
     
     energies               <- sapply(DDDs, function(x){x@beam.energy.MeV.u})
     DDDs                   <- DDDs[order(energies)]

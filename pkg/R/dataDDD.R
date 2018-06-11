@@ -19,6 +19,7 @@ setClass( Class            = "dataDDD",
 ################################
 # Constructor
 dataDDD <- function(file.name){
+  # file.name <- x
 
   # Nested function to extract header items
   read.item.numeric  <-  function(data, code){
@@ -42,12 +43,12 @@ dataDDD <- function(file.name){
     }
   }
   
-  if(file_ext(file.name)%in%c("ddd", "csv")){
+  if(!tools::file_ext(file.name)%in%c("ddd", "csv")){
     stop("Error: unknown DDD file format")
   }
   
   # Read in TRiP98/syngoRT ddd files
-  if(file_ext(file.name) == "ddd"){
+  if(tools::file_ext(file.name) == "ddd"){
     input		<-	scan(file.name, 
                  what = "character", 
                  sep = "\n")
@@ -63,27 +64,25 @@ dataDDD <- function(file.name){
     material    	<-	read.item.character(input, "!material")
     density  		  <-	read.item.numeric(input, "!density")
     energy      	<-	read.item.numeric(input, "!energy")
-  
-    ddd                         <- read.table( file.name, skip=10 )
+    
+    start.line    <- grep("!ddd", input)[1]
+    ddd                         <- read.table( file.name, skip=start.line )
   }
   
   # Read in Lucas style csv files
-  if(file_ext(file.name) == "csv"){
+  if(tools::file_ext(file.name) == "csv"){
     input		<-	scan(file.name, 
                    what = "character", 
                    sep = "\n")
     
     #################
     # read parameters
-    file.type     <-  read.item.character(input, "!filetype")
-    if(file.type != "ddd"){
-      stop("File is not a valid DDD data file.")
-    }
-    file.date     <-  read.item.character(input, "!filedate")
-    projectile	  <-	read.item.character(input, "!projectile")
-    material    	<-	read.item.character(input, "!material")
-    density  		  <-	read.item.numeric(input, "!density")
-    energy      	<-	read.item.numeric(input, "!energy")
+    file.type     <-  "csv"
+    file.date     <-  "n/a"
+    projectile	  <-	"n/a"
+    material    	<-	"n/a"
+    density  		  <-	"n/a"
+    energy      	<-	read.item.numeric(input, "# nominal energy: ")
     
     ddd                         <- read.table( file.name, skip=10 )
   }
