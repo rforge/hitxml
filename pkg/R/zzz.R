@@ -8,5 +8,5 @@
 }
 
 HITXML <- function(){
-  source( system.file( 'exec', 'HIT_XML.Create_Plan.R', package = 'HITXML' ) )
+  source( system.file( 'exec', '1-Templates', 'HIT_XML.Create_Plan.R', package = 'HITXML' ) )
 }
