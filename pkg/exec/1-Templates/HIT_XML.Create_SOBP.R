@@ -7,6 +7,7 @@
 #' biological optization by Steffen Greilich, 2015-07
 #' 
 #' Revised 2017-09-25
+#' Revised 2018-06-23, write out of depth curves, spectra, SG
 
 rm(list = ls())
 library(HITXML)
@@ -16,9 +17,9 @@ library(parallel)
 
 #' START OF USER INPUT
 
+expid                   <- "SOBP0204b"
+
 # path to spc and ddd data
-#ddd.path <- "D:/04 - Risoe, DKFZ/03 - Methodik/11-20/20 - TRiP/04 - TRiP Basic Data/HIT/03 - TRiP98DATA_HIT-20131120/DDD/p/RF0MM/"
-#spc.path <- "D:/04 - Risoe, DKFZ/03 - Methodik/11-20/20 - TRiP/04 - TRiP Basic Data/HIT/03 - TRiP98DATA_HIT-20131120/SPC/p/RF0MM/"
 ddd.path <- "D:/04 - Risoe, DKFZ/03 - Methodik/11-20/20 - TRiP/04 - TRiP Basic Data/HIT/03 - TRiP98DATA_HIT-20131120/DDD/12C/RF3MM/"
 spc.path <- "D:/04 - Risoe, DKFZ/03 - Methodik/11-20/20 - TRiP/04 - TRiP Basic Data/HIT/03 - TRiP98DATA_HIT-20131120/SPC/12C/RF3MM/"
 rbe.path <- "D:/04 - Risoe, DKFZ/03 - Methodik/11-20/20 - TRiP/04 - TRiP Basic Data/HIT/03 - TRiP98DATA_HIT-20131120/RBE"
@@ -26,25 +27,30 @@ rbe.path <- "D:/04 - Risoe, DKFZ/03 - Methodik/11-20/20 - TRiP/04 - TRiP Basic D
 # minimal and maximal depth in cm
 min.depth.g.cm2         <- 02
 max.depth.g.cm2         <- 03.9
-expid                   <- "SOBP0204b"
+extend.IES              <- c(1,1)   # Number of additional IESs proximal and distal to SOBP (can yield more smooth plateau) 
 
+# WET offset to isocenter
 offset.g.cm2            <- 0.289
 
-step.size.g.cm2         <- 0.025
-IES.step                <- 2
-plateau.dose.Gy         <- 1
+# SOBP plateau
+step.size.g.cm2         <- 0.025    # Distance between dose points which enter plateau flatness optimization 
+IES.step                <- 2        # Use every ... IES available
+plateau.dose.Gy         <- 1        # Dose at SOBP plateau
 
-output.LET              <- TRUE
-LET.step.size.g.cm2     <- 0.125
+output.LET              <- TRUE     # Compute LET?
+LET.step.size.g.cm2     <- 0.125    # Distance between LET points computed
 
-biol.optimization       <- FALSE
-rbe.file                <- "chordom02.rbe"
-n.biol.opt.steps        <- 5
-bio.step.size.g.cm2     <- 0.25
+biol.optimization       <- FALSE    # Do biological optimization?
+rbe.file                <- "chordom02.rbe"  # Tissue to be used for LEM
+n.biol.opt.steps        <- 5        # Number of iterations in biological optimization
+bio.step.size.g.cm2     <- 0.25     # Distance between RBE points which enter plateau flatness optimization
 
-write.SOBP              <- TRUE
+write.SOBP              <- TRUE     # Write out dat-file with results?
+# Vector with depths at which spectra should be written out in text file for later use
+write.out.spectra.at.g.cm2    <- 1:20 # Write out particle energy spectra at the positions given
+write.out.depth.curves        <- TRUE # Write out depth curves (dose, fluence, and LET if applicable) to text file
 
-plot.range              <- 2.0
+plot.range              <- 2.0      # Plot depth up to ... time Bragg peak position 
 
 #' END OF USER INPUT
 
@@ -53,15 +59,15 @@ min.depth.g.cm2         <- min.depth.g.cm2 + offset.g.cm2
 max.depth.g.cm2         <- max.depth.g.cm2 + offset.g.cm2
 
 # read in DDD files  
-ddds              <- dataDDDset(ddd.path = ddd.path)
+ddds                    <- dataDDDset(ddd.path = ddd.path)
 
-# get IESs necessary
-jj                <- ddds@peak.positions.g.cm2 > min.depth.g.cm2 & ddds@peak.positions.g.cm2 <= max.depth.g.cm2 &
+# from those, select IESs necessary
+jj                      <- ddds@peak.positions.g.cm2 > min.depth.g.cm2 & ddds@peak.positions.g.cm2 <= max.depth.g.cm2 &
                              rep(c(TRUE, rep(FALSE, IES.step - 1)), length.out = length(ddds@projectiles))
-jj[head(which(jj), 1)-IES.step] <- TRUE
-jj[tail(which(jj), 1)+IES.step] <- TRUE
-no.IES            <- sum(jj)
-ddds.sub          <- ddds[which(jj)]
+jj[head(which(jj), extend.IES[1]) - IES.step] <- TRUE
+jj[tail(which(jj), extend.IES[2]) + IES.step] <- TRUE
+no.IES                          <- sum(jj)
+ddds.sub                        <- ddds[which(jj)]
 
 
 #' A. DO PHYSICAL OPTIMIZATION
