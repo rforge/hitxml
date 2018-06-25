@@ -42,7 +42,7 @@ IES.step                <- 2        # Use every ... IES available
 plateau.dose.Gy         <- 1        # Dose at SOBP plateau
 
 # Biological optimization
-biol.optimization       <- FALSE    # Do biological optimization?
+biol.optimization       <- TRUE    # Do biological optimization?
 rbe.file                <- "chordom02.rbe"  # Tissue to be used for LEM
 n.biol.opt.steps        <- 5        # Number of iterations in biological optimization
 bio.step.size.g.cm2     <- 0.25     # Distance between RBE points which enter plateau flatness optimization
