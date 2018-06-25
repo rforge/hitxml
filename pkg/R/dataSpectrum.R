@@ -73,143 +73,6 @@ spectrum.get.depth.g.cm2 <- function(spectrum){
   return(spectrum@depth.g.cm2)
 }
 
-#' @title Total number of particles in a spectrum
-#' 
-#' @description Return sum of particles
-#' 
-#' @param x Object of class \code{\link{dataSpectrum}} or list of objects of this class
-#' @param particle.no if given, only these particles will be counted
-spectrum.total.n.particles <- function(x, particle.no = NULL){
-  if(is.null(particle.no)){
-    FUN <- function(xx){sum(xx@spectrum[,"N"])}
-  }else{
-    FUN <- function(xx){
-      ii <- xx@spectrum[,"particle.no"] == particle.no
-      return(sum(xx@spectrum[ii,"N"]))
-      }
-  }
-  if(class(x) == "dataSpectrum"){
-    return(FUN(x))
-  }else{
-    return(sapply(x, FUN))
-  }
-}
-
-#' @title Fluence weighted LET of particles in a spectrum (in water, using ICRU)
-#' 
-#' @description Return fLET of particles
-#' 
-#' @param x Object of class \code{\link{dataSpectrum}} or list of objects of this class
-#' @param particle.no if given, only these particles will be counted
-spectrum.fLET <- function(x, stopping.power.source.no = 3, material.no = 1, particle.no = NULL){
-  if(is.null(particle.no)){
-    ii <- rep(TRUE, nrow(x@spectrum))
-  }else{
-    ii <- x@spectrum[,"particle.no"] == particle.no
-  }
-    
-  x@spectrum   <- x@spectrum[ii,]
-  
-  FUN <- function(xx){
-    AT.fluence.weighted.LET.MeV.cm2.g(E.MeV.u     = xx@spectrum[,"E.MeV.u"],
-                                      particle.no = xx@spectrum[,"particle.no"],
-                                      fluence.cm2 = xx@spectrum[,"N"],
-                                      material.no = 1,
-                                      stopping.power.source.no = 3)$returnValue}
-  
-  if(class(x) == "dataSpectrum"){
-    return(FUN(x))
-  }else{
-    return(sapply(x, FUN))
-  }
-}
-
-#' @title Dose weighted LET of particles in a spectrum (in water, using ICRU)
-#' 
-#' @description Return dLET of particles
-#' 
-#' @param x Object of class \code{\link{dataSpectrum}} or list of objects of this class
-#' @param particle.no if given, only these particles will be counted
-spectrum.dLET <- function(x, particle.no = NULL){
-  if(is.null(particle.no)){
-    ii <- rep(TRUE, nrow(x@spectrum))
-  }else{
-    ii <- x@spectrum[,"particle.no"] == particle.no
-  }
-  
-  x@spectrum   <- x@spectrum[ii,]
-  
-  FUN <- function(xx){
-    AT.dose.weighted.LET.MeV.cm2.g(E.MeV.u     = xx@spectrum[,"E.MeV.u"],
-                                      particle.no = xx@spectrum[,"particle.no"],
-                                      fluence.cm2 = xx@spectrum[,"N"],
-                                      material.no = 1,
-                                      stopping.power.source.no = 3)$returnValue}
-  
-  if(class(x) == "dataSpectrum"){
-    return(FUN(x))
-  }else{
-    return(sapply(x, FUN))
-  }
-}
-
-#' @title Mass stopping power for all energy bins in a spectrum
-#' 
-#' @description (List of) vector(s) of mass stopping power values (in the order of particle number and energies)
-#' of the given spectrum/a.
-#' 
-#' @details Uses \code{\link[libamtrack]{libamtrack}} stopping power function
-#' 
-#' @param x Object of class \code{\link{dataSpectrum}} or list of objects of this class
-#' @param stopping.power.source Descriptor for source of stopping power data (\code{\link[libamtrack]{stopping.power.source}})
-#' @param target.material Descriptor for target material (\code{\link[libamtrack]{material.no}})
-spectrum.Mass.Stopping.Power.MeV.cm2.g <- function(x, stopping.power.source, target.material){
-  FUN <- function(xx, s, t){ AT.Mass.Stopping.Power( s,
-                                                     xx@spectrum[,"E.MeV.u"],
-                                                     xx@spectrum[,"particle.no"],
-                                                     AT.material.no.from.material.name(t))$stopping.power.MeV.cm2.g}
-  
-  if(class(x) == "dataSpectrum"){
-    return( FUN(x,
-                s = stopping.power.source,
-                t = target.material))
-  }else{ return(  lapply(x,
-                  FUN,
-                  s = stopping.power.source,
-                  t = target.material))
-  }
-  
-}
-
-#' @title Dose for a spectrum
-#' 
-#' @description (Vector of) dose in Gy
-#' 
-#' @details Uses \code{\link[libamtrack]{libamtrack}} stopping power function
-#' 
-#' @param x Object of class \code{\link{dataSpectrum}} or list of objects of this class
-#' @param stopping.power.source Descriptor for source of stopping power data (\code{\link[libamtrack]{stopping.power.source}})
-#' @param target.material Descriptor for target material (\code{\link[libamtrack]{material.no}})
-spectrum.dose.Gy <- function(x, stopping.power.source, target.material){
-  FUN <- function(xx, s, t, d){ m <- spectrum.Mass.Stopping.Power.MeV.cm2.g(xx, s, t)
-                                sum(m * xx@spectrum[,"N"]) / d * 1.60217657e-10}
-  
-  density.g.cm3 <- AT.get.materials.data(AT.material.no.from.material.name(target.material))$density.g.cm3
-
-  if(class(x) == "dataSpectrum"){
-    return(FUN(x,
-               s = stopping.power.source,
-               t = target.material,
-               d = density.g.cm3))
-  }else{
-    return(sapply(x,
-                  FUN,
-                  s = stopping.power.source,
-                  t = target.material,
-                  d = density.g.cm3))
-  }
-}
-
 #' R function for interpolation of spc files
 #' with depth, was in libamtrack and moved to HITXML Jul15, sgre
 spectrum.at.depth.g.cm2 <- function(spectra, depth.g.cm2, interpolate = TRUE)
@@ -282,4 +145,21 @@ setMethod(f          = "*",
                 spectrum            = new.spectrum)
           })
 
+#' @title Converts dataSpectrum to data table
+#' 
+#' @description Converts dataSpectrum to data table
+#' 
+#' @param x Object of class \code{\link{dataSpectrum}} or list of objects of this class
+get.data.table <- function(x){
+  FUN <- function(xx){
+    cbind(data.table(depth.g.cm2 = rep(xx@depth.g.cm2, nrow(xx@spectrum))),
+          as.data.table(xx@spectrum))}
+
+  if(class(x) == "dataSpectrum"){
+    return(FUN(x))
+  }else{
+    return(rbindlist(lapply(x,
+                            FUN)))
+  }
+}
 
