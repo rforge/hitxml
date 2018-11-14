@@ -17,32 +17,37 @@ setClass( Class            = "dataDDDset",
 
 ################################
 # Constructor
-dataDDDset <- function(pattern = "*", ddd.path = "."){
-    # pattern = "*"; ddd.path = ddd.path
-    files <- list.files(path       = ddd.path, 
-                        pattern    = pattern,
-                        full.names = TRUE)
+dataDDDset <- function(type = c("ddd", "csv")[1], ddd.path = "."){
     
-    projectiles            <- character()
-    beam.energies.MeV.u    <- numeric()
-    target.materials       <- character()
-    peak.positions.g.cm2   <- numeric()
-    densities.g.cm3        <- numeric()
-    DDDs                   <- lapply(files, function(x){
-                                              # x <- files[1]
-                                              cat("Reading", basename(x), "...\n")
-                                              dataDDD(x)})
-    
-    energies               <- sapply(DDDs, function(x){x@beam.energy.MeV.u})
-    DDDs                   <- DDDs[order(energies)]
-    
-    new("dataDDDset",
-        projectiles          = sapply(DDDs, function(x){x@projectile}),
-        beam.energies.MeV.u  = sapply(DDDs, function(x){x@beam.energy.MeV.u}),
-        target.materials     = sapply(DDDs, function(x){x@target.material}),
-        peak.positions.g.cm2 = sapply(DDDs, function(x){x@peak.position.g.cm2}),
-        densities.g.cm3      = sapply(DDDs, function(x){x@density.g.cm3}),
-        DDDs                 = DDDs)
+  if(type == "ddd"){
+    pattern <- "*\\.ddd"
+  }
+  if(type == "csv"){
+    pattern <- "*\\.csv"
+  }
+
+  files <- list.files(path       = ddd.path, 
+                      pattern    = pattern,
+                      full.names = TRUE)
+  if(length(files) == 0){
+    stop("No ddd files found - wrong directory?")
+  }
+
+  DDDs                   <- lapply(files, function(x){
+                                            # x <- files[1]
+                                            cat("Reading", basename(x), "...\n")
+                                            dataDDD(x)})
+  
+  energies               <- sapply(DDDs, function(x){x@beam.energy.MeV.u})
+  DDDs                   <- DDDs[order(energies)]
+  
+  new("dataDDDset",
+      projectiles          = sapply(DDDs, function(x){x@projectile}),
+      beam.energies.MeV.u  = sapply(DDDs, function(x){x@beam.energy.MeV.u}),
+      target.materials     = sapply(DDDs, function(x){x@target.material}),
+      peak.positions.g.cm2 = sapply(DDDs, function(x){x@peak.position.g.cm2}),
+      densities.g.cm3      = sapply(DDDs, function(x){x@density.g.cm3}),
+      DDDs                 = DDDs)
 }
 
 get.ddd <- function(DDD.set, beam.energy.MeV.u){

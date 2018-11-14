@@ -7,6 +7,9 @@ setClass( Class            = "dataDDD",
                                 target.material        = "character",
                                 density.g.cm3          = "numeric",
                                 peak.position.g.cm2    = "numeric",
+                                alpha.X.Gy             = "numeric",
+                                beta.X.Gy2             = "numeric",
+                                RBE.model              = "character",
                                 DDD                    = "data.frame"),
           prototype        = list( projectile             = character(),
                                    beam.energy.MeV.u      = numeric(),
@@ -14,11 +17,13 @@ setClass( Class            = "dataDDD",
                                    density                = numeric(),
                                    peak.position.g.cm2    = numeric(),
                                    DDD                    = data.frame(depth.g.cm2                 = numeric(),
-                                                                       dE.dz.MeV.cm2.g             = numeric())) )
+                                                                       dE.dz.MeV.cm2.g             = numeric(),
+                                                                       alpha.ion.Gy                = numeric(),
+                                                                       beta.ion.Gy2                = numeric())) )
 
 ################################
 # Constructor
-dataDDD <- function(file.name){
+dataDDD <- function(file.name, type){
   # file.name <- x
 
   # Nested function to extract header items

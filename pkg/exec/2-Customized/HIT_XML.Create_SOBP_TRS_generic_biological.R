@@ -8,7 +8,7 @@
 #' 
 #' Revised 2017-09-25
 #' Revised 2018-06-23, write out of depth curves, spectra, SG
-
+#' Revised 2018-11-13, use generic RBE data
 rm(list = ls())
 library(HITXML)
 library(lattice)
@@ -18,28 +18,28 @@ library(data.table)
 
 #' START OF USER INPUT
 
-expid                   <- "TRSDist"
+expid                   <- "sg86102"
 
 # path to spc and ddd data
-ddd.path <- "D:/04 - Risoe, DKFZ/03 - Methodik/11-20/20 - TRiP/04 - TRiP Basic Data/HIT/03 - TRiP98DATA_HIT-20131120/DDD/12C/RF3MM/"
-#ddd.path <- "D:/00 - Einstellungen/E0409-NB7/Dropbox/Beruf/Workspace/TRS398_SPR_revision/03 - Data/TRS398_C12_basedata_generic/generic/ddd/12C/RF3MM_3mmSteps_enSpread/"
-spc.path <- "D:/04 - Risoe, DKFZ/03 - Methodik/11-20/20 - TRiP/04 - TRiP Basic Data/HIT/03 - TRiP98DATA_HIT-20131120/SPC/12C/RF3MM/"
-rbe.path <- "D:/04 - Risoe, DKFZ/03 - Methodik/11-20/20 - TRiP/04 - TRiP Basic Data/HIT/03 - TRiP98DATA_HIT-20131120/RBE"
+#ddd.path <- "D:/04 - Risoe, DKFZ/03 - Methodik/11-20/20 - TRiP/04 - TRiP Basic Data/HIT/03 - TRiP98DATA_HIT-20131120/DDD/12C/RF3MM/"
+ddd.path <- "D:/00 - Einstellungen/E0409-NB7/Dropbox/Beruf/Workspace/TRS398_SPR_revision/03 - Data/TRS398_C12_basedata_generic/generic/ddd/12C/RF3MM_3mmSteps_enSpread/"
+# spc.path <- "D:/04 - Risoe, DKFZ/03 - Methodik/11-20/20 - TRiP/04 - TRiP Basic Data/HIT/03 - TRiP98DATA_HIT-20131120/SPC/12C/RF3MM/"
+# rbe.path <- "D:/04 - Risoe, DKFZ/03 - Methodik/11-20/20 - TRiP/04 - TRiP Basic Data/HIT/03 - TRiP98DATA_HIT-20131120/RBE"
 #ddd.path <- "~/Workspace/03 - TRiP98DATA_HIT-20131120/DDD/12C/RF3MM/"
 #spc.path <- "~/Workspace/03 - TRiP98DATA_HIT-20131120/SPC/12C/RF3MM/"
 #rbe.path <- "~/Workspace/03 - TRiP98DATA_HIT-20131120/RBE"
 
 # minimal and maximal depth in cm
-min.depth.g.cm2         <- 10
-max.depth.g.cm2         <- 15.9
+min.depth.g.cm2         <- 27.6
+max.depth.g.cm2         <- 29.6
 extend.IES              <- c(1,1)   # Number of additional IESs proximal and distal to SOBP (can yield more smooth plateau) 
 
 # WET offset to isocenter
 offset.g.cm2            <- 0.0
 
 # SOBP plateau
-step.size.g.cm2         <- 0.01     # Distance between dose points which enter plateau flatness optimization 
-IES.step                <- 3        # Use every ... IES available
+step.size.g.cm2         <- 0.02     # Distance between dose points which enter plateau flatness optimization 
+IES.step                <- 2        # Use every ... IES available
 plateau.dose.Gy         <- 1        # Dose at SOBP plateau
 
 # Biological optimization

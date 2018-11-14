@@ -16,7 +16,7 @@ library(ggplot2)
 # USER SETTINGS ####
 resolution.mm          <- 1
 # file.name              <- "HIT-Plan/SOBP.xml"
-file.name              <- "ab0001Test.xml"    
+file.name              <- "D://workspaces/R/SOBP_1H.xml"    
 
 # SCRIPT ####
 df <- HX.read.PBR(file.name)
