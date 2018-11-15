@@ -7,27 +7,26 @@ setClass( Class            = "dataDDDset",
                                 target.materials         = "character",
                                 peak.positions.g.cm2     = "numeric",
                                 densities.g.cm3          = "numeric",
+                                alpha.X.Gy               = "numeric",
+                                beta.X.Gy2               = "numeric",
+                                RBE.model                = "character",
                                 DDDs                     = "list"),
           prototype        = list( projectiles            = character(),
                                    beam.energies.MeV.u    = numeric(),
                                    target.materials       = character(),
                                    peak.positions.g.cm2   = numeric(),
                                    densities.g.cm3        = numeric(),
+                                   alpha.X.Gy             = numeric(),
+                                   beta.X.Gy2             = numeric(),
+                                   RBE.model              = character(),
                                    DDDs                   = list()) )
 
 ################################
 # Constructor
-dataDDDset <- function(type = c("ddd", "csv")[1], ddd.path = "."){
+dataDDDset <- function(ddd.path = "."){
     
-  if(type == "ddd"){
-    pattern <- "*\\.ddd"
-  }
-  if(type == "csv"){
-    pattern <- "*\\.csv"
-  }
-
   files <- list.files(path       = ddd.path, 
-                      pattern    = pattern,
+                      pattern    = "*\\.ddd",
                       full.names = TRUE)
   if(length(files) == 0){
     stop("No ddd files found - wrong directory?")
@@ -40,6 +39,19 @@ dataDDDset <- function(type = c("ddd", "csv")[1], ddd.path = "."){
   
   energies               <- sapply(DDDs, function(x){x@beam.energy.MeV.u})
   DDDs                   <- DDDs[order(energies)]
+  
+  alpha.X.Gy             <- unique(sapply(DDDs, function(x){x@alpha.X.Gy}))
+  beta.X.Gy2             <- unique(sapply(DDDs, function(x){x@beta.X.Gy2}))
+  RBE.model              <- unique(sapply(DDDs, function(x){x@RBE.model}))
+  if(length(alpha.X.Gy) > 1){
+    stop("DDD data differ in alphaX value!")
+  }
+  if(length(beta.X.Gy2) > 1){
+    stop("DDD data differ in betaX value!")
+  }
+  if(length(RBE.model) > 1){
+    stop("DDD data differ in RBE model!")
+  }
   
   new("dataDDDset",
       projectiles          = sapply(DDDs, function(x){x@projectile}),

@@ -16,6 +16,9 @@ setClass( Class            = "dataDDD",
                                    target.material        = character(),
                                    density                = numeric(),
                                    peak.position.g.cm2    = numeric(),
+                                   alpha.X.Gy             = numeric(),
+                                   beta.X.Gy2             = numeric(),
+                                   RBE.model              = character(),
                                    DDD                    = data.frame(depth.g.cm2                 = numeric(),
                                                                        dE.dz.MeV.cm2.g             = numeric(),
                                                                        alpha.ion.Gy                = numeric(),
@@ -23,16 +26,18 @@ setClass( Class            = "dataDDD",
 
 ################################
 # Constructor
-dataDDD <- function(file.name, type){
+dataDDD <- function(file.name){
   # file.name <- x
 
   # Nested function to extract header items
   read.item.numeric  <-  function(data, code){
     line  <-	input[grep(code, data)]
-    if (!is.null(line)){
-      return(as.numeric(substring( line, regexpr(" ", line) + 1, nchar(line))))
+    if (length(line) != 0){
+      line <- gsub("\\s+", " ", stringr::str_trim(line))
+      parts <- strsplit(line, " ")
+      return(as.numeric(parts[[1]][2]))
     }else{
-      return(0.0)
+      return(NA)
     }
   }
   
@@ -44,64 +49,45 @@ dataDDD <- function(file.name, type){
     if (!is.null(line)){
       return(trim(substring( line, regexpr(" ", line) + 1, nchar(line))))
     }else{
-      return(0.0)
+      return("N/A")
     }
   }
   
-  if(!tools::file_ext(file.name)%in%c("ddd", "csv")){
-    stop("Error: unknown DDD file format")
-  }
-  
-  # Read in TRiP98/syngoRT ddd files
-  if(tools::file_ext(file.name) == "ddd"){
-    input		<-	scan(file.name, 
+  # Read in TRiP98/syngoRT ddd files, potential extended by rbe data
+  input		<-	scan(file.name, 
                  what = "character", 
                  sep = "\n")
   
-    #################
-    # read parameters
-    file.type     <-  read.item.character(input, "!filetype")
-    if(file.type != "ddd"){
-      stop("File is not a valid DDD data file.")
+  #################
+  # read parameters
+  file.type     <-  read.item.character(input, "!filetype")
+  if(!file.type%in%c("ddd", "ddd.HITXML")){
+    stop("File is not a valid DDD data file.")
+  }
+  file.date     <-  read.item.character(input, "!filedate")
+  projectile	  <-	read.item.character(input, "!projectile")
+  material    	<-	read.item.character(input, "!material")
+  density  		  <-	read.item.numeric(input, "!density")
+  energy      	<-	read.item.numeric(input, "!energy")
+  alpha.X.Gy    <-	read.item.numeric(input, "!alphaX:")
+  beta.X.Gy2    <-	read.item.numeric(input, "!betaX:")
+  RBE.model     <-  read.item.character(input, "!rbemodel")
+  start.line    <-  grep("!ddd", input)[1]
+  ddd           <-  read.table( skip = start.line,
+                                sep = " ",
+                                text = gsub(",", " ",
+                                       gsub("\t", " ", 
+                                            readLines(file.name))))
+
+  if(file.type == "ddd"){
+    if(ncol(ddd)>2){
+      ddd <- ddd[,seq(-3, -1*ncol(ddd))]
     }
-    file.date     <-  read.item.character(input, "!filedate")
-    projectile	  <-	read.item.character(input, "!projectile")
-    material    	<-	read.item.character(input, "!material")
-    density  		  <-	read.item.numeric(input, "!density")
-    energy      	<-	read.item.numeric(input, "!energy")
-    
-    start.line    <- grep("!ddd", input)[1]
-    ddd                         <- read.table( file.name, skip=start.line )
+    ddd[3] <- rep(NA, nrow(ddd))
+    ddd[4] <- rep(NA, nrow(ddd))
   }
   
-  # Read in Lucas style csv files
-  if(tools::file_ext(file.name) == "csv"){
-    input		<-	scan(file.name, 
-                   what = "character", 
-                   sep = "\n")
-    
-    #################
-    # read parameters
-    file.type     <-  "csv"
-    file.date     <-  "n/a"
-    projectile	  <-	"n/a"
-    material    	<-	"n/a"
-    density  		  <-	"n/a"
-    energy      	<-	read.item.numeric(input, "# nominal energy: ")
-    
-    ddd                         <- read.table( file.name, skip=10 )
-  }
-  
-  
-  
-  
-  if(ncol(ddd)>2) {
-      ddd <- ddd[,-5]
-      ddd <- ddd[,-4]
-      ddd <- ddd[,-3]
-    }
-  
-  colnames(ddd)               <- c("depth.g.cm2", "dE.dz.MeV.cm2.g")
+  colnames(ddd)               <- c("depth.g.cm2", "dE.dz.MeV.cm2.g", "alpha.ion.Gy", "beta.ion.Gy2")
 
   new("dataDDD",
       projectile          = projectile,
@@ -109,6 +95,9 @@ dataDDD <- function(file.name, type){
       target.material     = material,
       density.g.cm3       = density,
       peak.position.g.cm2 = ddd$depth.g.cm2[which.max(ddd$dE.dz.MeV.cm2.g)],
+      alpha.X.Gy          = alpha.X.Gy,
+      beta.X.Gy2          = beta.X.Gy2,
+      RBE.model           = RBE.model,
       DDD                 = ddd)
 }
 

@@ -8,7 +8,7 @@
 #' 
 #' Revised 2017-09-25
 #' Revised 2018-06-23, write out of depth curves, spectra, SG
-
+#' Revised 2018-11-13, use generic RBE data
 rm(list = ls())
 library(HITXML)
 library(lattice)
@@ -16,21 +16,22 @@ library(parallel)
 library(optimParallel)
 library(data.table)
 
-#' START OF USER INPUT
 
-expid                   <- "sg86402"
-
+#===============#
+# USER INPUT ####
+#===============#
+expid                   <- "sg86112"
 # path to spc and ddd data
-#ddd.path <- "D:/04 - Risoe, DKFZ/03 - Methodik/11-20/20 - TRiP/04 - TRiP Basic Data/HIT/03 - TRiP98DATA_HIT-20131120/DDD/12C/RF3MM/"
-ddd.path <- "D:/00 - Einstellungen/E0409-NB7/Dropbox/Beruf/Workspace/TRS398_SPR_revision/03 - Data/TRS398_C12_basedata_generic/generic/ddd/12C/RF3MM_3mmSteps_enSpread/"
-# spc.path <- "D:/04 - Risoe, DKFZ/03 - Methodik/11-20/20 - TRiP/04 - TRiP Basic Data/HIT/03 - TRiP98DATA_HIT-20131120/SPC/12C/RF3MM/"
-# rbe.path <- "D:/04 - Risoe, DKFZ/03 - Methodik/11-20/20 - TRiP/04 - TRiP Basic Data/HIT/03 - TRiP98DATA_HIT-20131120/RBE"
-#ddd.path <- "~/Workspace/03 - TRiP98DATA_HIT-20131120/DDD/12C/RF3MM/"
-#spc.path <- "~/Workspace/03 - TRiP98DATA_HIT-20131120/SPC/12C/RF3MM/"
-#rbe.path <- "~/Workspace/03 - TRiP98DATA_HIT-20131120/RBE"
+base.path <- file.path("D:/00 - Einstellungen/E0409-NB7",
+                       "Dropbox/Beruf/Workspace/TRS398_SPR_revision/03 - Data/TRS398_C12_basedata_generic/generic")
+
+ddd.path <- file.path(base.path,
+                      "DDD-HITXML/12C/RF3MM_3mmSteps_enSpread/ab2")
+
+#spc.path <- "D:/04 - Risoe, DKFZ/03 - Methodik/11-20/20 - TRiP/04 - TRiP Basic Data/HIT/03 - TRiP98DATA_HIT-20131120/SPC/12C/RF3MM/"
 
 # minimal and maximal depth in cm
-min.depth.g.cm2         <- 27.6
+min.depth.g.cm2         <- 17.6
 max.depth.g.cm2         <- 29.6
 extend.IES              <- c(1,1)   # Number of additional IESs proximal and distal to SOBP (can yield more smooth plateau) 
 
@@ -39,14 +40,19 @@ offset.g.cm2            <- 0.0
 
 # SOBP plateau
 step.size.g.cm2         <- 0.02     # Distance between dose points which enter plateau flatness optimization 
-IES.step                <- 2        # Use every ... IES available
+IES.step                <- 1        # Use every ... IES available
 plateau.dose.Gy         <- 1        # Dose at SOBP plateau
 
-# Biological optimization
-biol.optimization       <- FALSE    # Do biological optimization?
-rbe.file                <- "chordom02.rbe"  # Tissue to be used for LEM
-n.biol.opt.steps        <- 5        # Number of iterations in biological optimization
-bio.step.size.g.cm2     <- 0.25     # Distance between RBE points which enter plateau flatness optimization
+output.LET              <- FALSE
+LET.step.size.g.cm2     <- 0.125
+
+biol.optimization       <- FALSE
+rbe.method              <- c("SPCs and RBE file", "From alpha/beta with depth")[2]
+rbe.path                <- file.path(base.path,
+                                     "DDD_alpha_beta/12C/RF3MM_3mmSteps_enSpread")
+rbe.file                <- "chordom02.rbe"
+n.biol.opt.steps        <- 5
+bio.step.size.g.cm2     <- 0.25
 
 # Output spectra?
 output.spectra          <- FALSE     
@@ -55,7 +61,11 @@ spectra.step.size.g.cm2 <- 0.125    # Distance between depth positions at which 
 # Misc
 plot.range              <- 2.0      # Plot depth up to ... time Bragg peak position 
 
-#' END OF USER INPUT
+
+
+#==========================#
+# Physical optimization ####
+#==========================#
 
 # Add offset to SOBP range
 min.depth.g.cm2         <- min.depth.g.cm2 + offset.g.cm2
@@ -72,8 +82,6 @@ jj[tail(which(jj), extend.IES[2]) + IES.step] <- TRUE
 no.IES                          <- sum(jj)
 ddds.sub                        <- ddds[which(jj)]
 
-
-#' A. DO PHYSICAL OPTIMIZATION
 
 # Vector of depths covering the SOBP
 depths.g.cm2       <- seq( from       = min.depth.g.cm2, 
@@ -183,6 +191,8 @@ if(biol.optimization){
                                 dataSpectrum(s[[i]], d)},
                               s = ddds.spc,
                               d = depths.g.cm2)
+  # save(spectra.at.depth, file = "sad.rda")
+  # load("sad.rda")
 
   
   ###############################
@@ -306,6 +316,7 @@ if(biol.optimization){
                                                         xout = plot.depths.g.cm2,
                                                         rule = 2)$y)
   df.plot$D.biol.Gy <- df.plot$D.phys.Gy * df.plot$RBE
+
 }
 
 ###################
@@ -372,6 +383,5 @@ if(output.spectra){
   dt.spectra <- get.data.table(eff.spectra.at.depth)
   write.table(dt.spectra, file = paste0(expid, "_spectra.csv"), quote = FALSE, sep = "; ", row.names = FALSE)
 }
-
 
 alarm()
