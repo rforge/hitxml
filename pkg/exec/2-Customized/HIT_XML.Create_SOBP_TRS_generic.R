@@ -20,7 +20,7 @@ library(data.table)
 #===============#
 # USER INPUT ####
 #===============#
-expid                   <- "sg86112"
+expid                   <- "sg86606"
 # path to spc and ddd data
 base.path <- file.path("D:/00 - Einstellungen/E0409-NB7",
                        "Dropbox/Beruf/Workspace/TRS398_SPR_revision/03 - Data/TRS398_C12_basedata_generic/generic")
@@ -31,9 +31,9 @@ ddd.path <- file.path(base.path,
 #spc.path <- "D:/04 - Risoe, DKFZ/03 - Methodik/11-20/20 - TRiP/04 - TRiP Basic Data/HIT/03 - TRiP98DATA_HIT-20131120/SPC/12C/RF3MM/"
 
 # minimal and maximal depth in cm
-min.depth.g.cm2         <- 17.6
-max.depth.g.cm2         <- 29.6
-extend.IES              <- c(1,1)   # Number of additional IESs proximal and distal to SOBP (can yield more smooth plateau) 
+min.depth.g.cm2         <- 2.0
+max.depth.g.cm2         <- 8.0
+extend.IES              <- c(0,1)   # Number of additional IESs proximal and distal to SOBP (can yield more smooth plateau) 
 
 # WET offset to isocenter
 offset.g.cm2            <- 0.0
@@ -122,7 +122,8 @@ if(.Platform$OS.type == "unix") {
                                       upper          = rep(20, no.IES),
                                       control        = list(trace = TRUE, 
                                                             maxit = 300,
-                                                            factr = 1e9),
+                                                            factr = 1e9,
+                                                            reltol = 1e-5),
                                       parallel       = list(cl = cl, forward = FALSE, loginfo = FALSE))$par
   stopCluster(cl)
 } else {
@@ -136,7 +137,8 @@ if(.Platform$OS.type == "unix") {
                                       upper          = rep(20, no.IES),
                                       control        = list(trace = TRUE, 
                                                             maxit = 300,
-                                                            factr = 1e9))$par
+                                                            factr = 1e9,
+                                                            reltol = 1e-5))$par
 }
 # Scale number of primaries to get actual weights
 fluence.factor <- plateau.dose.Gy / plateau.dose.per.primary.Gy
