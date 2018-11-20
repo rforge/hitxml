@@ -52,13 +52,16 @@ dataDDDset <- function(ddd.path = "."){
   if(length(RBE.model) > 1){
     stop("DDD data differ in RBE model!")
   }
-  
+
   new("dataDDDset",
       projectiles          = sapply(DDDs, function(x){x@projectile}),
       beam.energies.MeV.u  = sapply(DDDs, function(x){x@beam.energy.MeV.u}),
       target.materials     = sapply(DDDs, function(x){x@target.material}),
       peak.positions.g.cm2 = sapply(DDDs, function(x){x@peak.position.g.cm2}),
       densities.g.cm3      = sapply(DDDs, function(x){x@density.g.cm3}),
+      alpha.X.Gy           = alpha.X.Gy,
+      beta.X.Gy2           = beta.X.Gy2,
+      RBE.model            = RBE.model,
       DDDs                 = DDDs)
 }
 
@@ -98,6 +101,65 @@ get.dose.Gy.from.set <- function(DDD.set, depths.g.cm2, weights){
   return(apply(weights * doses, 2, sum))
 }
 
+
+get.RBE.from.set <- function(DDD.set, depths.g.cm2, weights){
+  
+  n.ddd <- length(DDD.set@beam.energies.MeV.u)
+  
+  if (missing(weights)){
+    weights <- rep(1.0, n.ddd)
+  }
+  
+  doses     <- matrix( unlist( mclapply( 1:n.ddd, 
+                                         function(i, x, y){ get.dose.Gy( get.ddd( x, 
+                                                                                  x@beam.energies.MeV.u[i]), 
+                                                                         y)},
+                                         x = DDD.set,
+                                         y = depths.g.cm2)),
+                       nrow  = n.ddd,
+                       byrow = TRUE)
+
+  alphas   <- matrix( unlist( mclapply( 1:n.ddd, 
+                                         function(i, x, y){ 
+                                           # i <- 1
+                                           get.alpha.ion.Gy( get.ddd( x, 
+                                                                      x@beam.energies.MeV.u[i]), 
+                                                                         y)},
+                                         x = DDD.set,
+                                         y = depths.g.cm2)),
+                       nrow  = n.ddd,
+                       byrow = TRUE)
+  
+  
+  betas   <- matrix( unlist( mclapply( 1:n.ddd, 
+                                        function(i, x, y){ 
+                                          # i <- 1
+                                          get.beta.ion.Gy2( get.ddd( x, 
+                                                                     x@beam.energies.MeV.u[i]), 
+                                                            y)},
+                                        x = DDD.set,
+                                        y = depths.g.cm2)),
+                      nrow  = n.ddd,
+                      byrow = TRUE)
+  
+  weighted.doses <- weights * doses
+  total.doses <- apply(weights * doses, 2, sum)
+
+  rel.weighted.doses <- weighted.doses / total.doses
+  weighted.alphas <- rel.weighted.doses * alphas
+  weighted.betas <- (rel.weighted.doses * sqrt(betas))^2
+  
+  total.alphas <- apply(weighted.alphas, 2, sum)
+  total.betas <- apply(weighted.betas, 2, sum)
+  
+  SF.X <- total.doses * DDD.set@alpha.X.Gy + total.doses^2 * DDD.set@beta.X.Gy2
+  SF.ion <- total.doses * total.alphas + total.doses^2 * total.betas
+  apply(rel.weighted.doses, 2, sum)
+  
+    weighted.alphas <- 
+  return()
+}
+
 setMethod(f          = "[", 
           signature  = "dataDDDset",
           definition = function(x, i){
@@ -110,6 +172,9 @@ setMethod(f          = "[",
                                target.materials     = x@target.materials[i],
                                peak.positions.g.cm2 = x@peak.positions.g.cm2[i],
                                densities.g.cm3      = x@densities.g.cm3[i],
+                               alpha.X.Gy           = x@alpha.X.Gy,
+                               beta.X.Gy2           = x@beta.X.Gy2,
+                               RBE.model            = x@RBE.model,
                                DDDs                 = x@DDDs[i]))
             }else{
                 return(x)

@@ -111,6 +111,25 @@ get.dose.Gy <- function(DDD.data, depths.g.cm2){
   return( doses )
 }
 
+get.alpha.ion.Gy <- function(DDD.data, depths.g.cm2){
+  alphas <- approx(DDD.data@DDD$depth.g.cm2, 
+                  DDD.data@DDD$alpha.ion.Gy, 
+                  xout = depths.g.cm2)$y
+  alphas[is.na(alphas)] <- 0.0
+  
+  return( alphas )
+}
+
+get.beta.ion.Gy2 <- function(DDD.data, depths.g.cm2){
+  betas <- approx(DDD.data@DDD$depth.g.cm2, 
+                   DDD.data@DDD$beta.ion.Gy2, 
+                   xout = depths.g.cm2)$y
+  betas[is.na(betas)] <- 0.0
+  
+  return( betas )
+}
+
+
 ######################
 # Methods
 setMethod(f          = "plot", 
