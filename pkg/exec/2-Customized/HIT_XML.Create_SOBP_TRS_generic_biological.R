@@ -15,14 +15,14 @@ library(lattice)
 library(parallel)
 library(optimParallel)
 library(data.table)
-
+library(grid)
 
 #===============#
 # USER INPUT ####
 #===============#
 expid                   <- "sg86106"
 # path to spc and ddd data
-base.path <- file.path("D:/00 - Einstellungen/E0408-NB01/",
+base.path <- file.path("D:/00 - Einstellungen/E0409-NB7/",
                        "Dropbox/Beruf/Workspace/TRS398_SPR_revision/03 - Data/TRS398_C12_basedata_generic/generic")
 
 ddd.path <- file.path(base.path,
@@ -41,7 +41,7 @@ offset.g.cm2            <- 0.0
 # SOBP plateau
 step.size.g.cm2         <- 0.02     # Distance between dose points which enter plateau flatness optimization 
 IES.step                <- 1        # Use every ... IES available
-plateau.dose.Gy         <- 1        # Dose at SOBP plateau
+plateau.dose.Gy         <- 3        # Dose at SOBP plateau (GyRBE)
 
 output.LET              <- FALSE
 LET.step.size.g.cm2     <- 0.125
@@ -101,12 +101,8 @@ dose.dev <- function(p, depths.g.cm2, DDD.set, dose.set.Gy){
   doses <- get.dose.Gy.from.set(DDD.set      = DDD.set, 
                                 depths.g.cm2 = depths.g.cm2, 
                                 weights      = p)
-  idx <- 1:length(depths.g.cm2)
-  
-#  weights.of.weights <- (idx - mean(idx))^2
-#  cost <- log10(sum( weights.of.weights * (doses - dose.set.Gy)^2))
-  cost <- log10(sum((doses - dose.set.Gy)^2))
-  return(cost)
+
+  return(log10(sum((doses - dose.set.Gy)^2)))
 }
 
 # minimize objective function to find weights
@@ -325,76 +321,32 @@ if(biol.optimization & (rbe.method == "From alpha/beta with depth")){
   ###############################
   # Iterate with RBE weighting
   for(biol.opt.step in 1:n.biol.opt.steps){
+    # biol.opt.step <- 1
     
-    
-    get.dose.Gy.from.set(DDD.set      = ddds.sub, 
-                         depths.g.cm2 = depths.g.cm2,
-                         weights      = total.weights)
-    
-    
-  }
-if(F){
-  ###############################
-  # 2. Iterate with RBE weighting
-  for(biol.opt.step in 1:n.biol.opt.steps){
-    # Applies the given weights to all spectra at depths covering SOBP (second index)
-    # from respective IESs (first index) 
-    w.spectra.at.depth  <- mclapply(1:no.IES,
-                                    function(i, s, w){
-                                      cat("Weighting spectra from IES", i, "\n")
-                                      lapply(1:length(s[[i]]),
-                                             function(j, ss, ww){
-                                               ss[[j]] * ww},
-                                             ss = s[[i]],
-                                             ww = w[i])},
-                                    s = spectra.at.depth,
-                                    w = total.weights)
-    
-    # Combines (adds) spectra from all IESs (first index) for the depths 
-    # covering the SOBP (second index). Spectra can be have been weighted before
-    eff.spectra.at.depth <- mclapply(1:length(depths.g.cm2),
-                                     function(i, s, n){
-                                       cat("Adding spectra for depth", i, "\n")
-                                       ss <- s[[1]][[i]]
-                                       if(n > 1){
-                                         for(j in 2:n){
-                                           ss <- ss + s[[j]][[i]]
-                                         }
-                                       }
-                                       ss},
-                                     s = w.spectra.at.depth,
-                                     n = no.IES)
-    
-    # Why does this get different results??
-    #dose.Gy(pp, 
-    #        stopping.power.source = "ICRU", 
-    #        target.material = "Water, Liquid")
     D.phys.Gy             <- get.dose.Gy.from.set( DDD.set      = ddds.sub, 
                                                    depths.g.cm2 = depths.g.cm2, 
                                                    weights      = total.weights)
-    rbe                   <- HX.RBE.LEM(rbe.data, 
-                                        eff.spectra.at.depth, 
-                                        D.phys.Gy)$RBE
+    rbe                   <- get.RBE.from.set(     DDD.set      = ddds.sub, 
+                                                   depths.g.cm2 = depths.g.cm2,
+                                                   weights      = total.weights)
     
-    # Get current physical dose in plateau per Gy
     plateau.dose.per.primary.Gy <- mean(get.dose.Gy.from.set(DDD.set      = ddds.sub, 
                                                              depths.g.cm2 = depths.g.cm2))
     # Scale down using RBE at all depth of SOBP
     rbe.scaled.plateau.doses.per.primary.Gy <- plateau.dose.per.primary.Gy / rbe
-    
-    # minimize objective function to find weights
-    rel.weights       <- optim( fn             = dose.dev, 
-                                par            = rep( 1, no.IES),
-                                depths.g.cm2   = depths.g.cm2,
-                                DDD.set        = ddds.sub,
-                                dose.set.Gy    = rbe.scaled.plateau.doses.per.primary.Gy,
-                                method         = "L-BFGS-B",
-                                lower          = rep(0.0, no.IES),
-                                control        = list(trace = TRUE, 
-                                                      maxit = 200,
-                                                      reltol = 1e-3))$par
-    # Scale number of primaries to get actual weights
     fluence.factor <- plateau.dose.Gy / mean(plateau.dose.per.primary.Gy)
+    
+    # minimize objective function to find weights, use current weights as starting parameters
+    rel.weights         <- optim( fn             = dose.dev, 
+                                  par            = total.weights / fluence.factor,
+                                  depths.g.cm2   = depths.g.cm2,
+                                  DDD.set        = ddds.sub,
+                                  dose.set.Gy    = rbe.scaled.plateau.doses.per.primary.Gy,
+                                  method         = "L-BFGS-B",
+                                  lower          = rep(0.0, no.IES),
+                                  control        = list(trace = 1, 
+                                                        maxit = 200))$par
+    # Scale number of primaries to get actual weights
     total.weights  <- rel.weights * fluence.factor
     
     plot(plot.SOBP(ddds.sub, 
@@ -402,49 +354,20 @@ if(F){
                    total.weights, 
                    paste0("(biol.opt., step ", biol.opt.step, ")")))
   }
-  
+
   ###########
   # GET RBE for entire field ( with reduced resolution)
   bio.depths.g.cm2         <- seq( from       = 0.0, 
                                    to         = max(ddds.sub@peak.positions.g.cm2) * plot.range, 
                                    by         = bio.step.size.g.cm2)
   
-  spectra.at.depth  <- mclapply(1:no.IES,
-                                function(i, s, d){
-                                  cat("Getting spectra from IES", i, "\n")
-                                  dataSpectrum(s[[i]], d)},
-                                s = ddds.spc,
-                                d = bio.depths.g.cm2)
-  
-  w.spectra.at.depth  <- mclapply(1:no.IES,
-                                  function(i, s, w){
-                                    cat("Weighting spectra from IES", i, "\n")
-                                    lapply(1:length(s[[i]]),
-                                           function(j, ss, ww){
-                                             ss[[j]] * ww},
-                                           ss = s[[i]],
-                                           ww = w[i])},
-                                  s = spectra.at.depth,
-                                  w = total.weights)
-  
-  eff.spectra.at.depth <- mclapply(1:length(bio.depths.g.cm2),
-                                   function(i, s, n){
-                                     cat("Adding spectra for depth", i, "\n")
-                                     ss <- s[[1]][[i]]
-                                     if(n > 1){
-                                       for(j in 2:n){
-                                         ss <- ss + s[[j]][[i]]
-                                       }
-                                     }
-                                     ss},
-                                   s = w.spectra.at.depth,
-                                   n = no.IES)
-  
   D.phys.Gy             <- get.dose.Gy.from.set( DDD.set      = ddds.sub, 
                                                  depths.g.cm2 = bio.depths.g.cm2, 
                                                  weights      = total.weights)
   
-  rbe                   <- HX.RBE.LEM(rbe.data, eff.spectra.at.depth, D.phys.Gy)$RBE
+  rbe                   <- get.RBE.from.set(     DDD.set      = ddds.sub, 
+                                                 depths.g.cm2 = bio.depths.g.cm2,
+                                                 weights      = total.weights)
   
   df.plot <- data.frame( depth.g.cm2          = plot.depths.g.cm2,
                          D.phys.Gy            = get.dose.Gy.from.set( DDD.set      = ddds.sub, 
@@ -455,8 +378,7 @@ if(F){
                                                         xout = plot.depths.g.cm2,
                                                         rule = 2)$y)
   df.plot$D.biol.Gy <- df.plot$D.phys.Gy * df.plot$RBE
-}  
-  
+
 }
 
 
@@ -476,9 +398,50 @@ write.table(df,
             eol       = "\r\n" )
 cat("Resulting weights written to ", file.name, "\n")
 
+if(biol.optimization){
+  myyscale.component <- function(...)
+  {
+    ans 				              <- yscale.components.default(...)
+    ans$right 	              <- ans$left
+    foo 				              <- ans$right$labels$at
+    ans$right$labels$labels 	<- as.character(foo * 5)
+    ans
+  }
+  
+  xyplot(D.biol.Gy + D.phys.Gy + RBE/5 ~ depth.g.cm2,
+         df.plot,
+         type = "l",
+         xlab = list("depth / (g/cm2)", cex=1.5),
+         ylab = list("Dose / (Gy, GyRBE)", cex=1.5),
+         par.settings=	list( layout.widths=list(right.padding=10)),
+         yscale.component	= myyscale.component,
+         legend = list(right = list(fun = textGrob,
+                                    args = list(x = 3,
+                                                y = 0.5,
+                                                rot = 90,
+                                                label = "RBE",
+                                                gp=gpar(cex = 1.5, col = "darkgreen"),
+                                                just = "center",
+                                                default.units = "native",
+                                                vp = viewport(xscale = c(0, 1),
+                                                              yscale = c(0, 1))))),
+         scales = list( x = list(cex = 1.25),
+                        y = list(cex = 1.25,
+                                 relation = "free",
+                                 rot = 0)),
+         grid = TRUE,
+         main = list(paste0("SOBP (single field, ",
+                            unique(ddds.sub@projectiles),
+                            ") consisting of ",
+                            no.IES,
+                            " IESs "),
+                     cex=1.5),
+         sub  = "NB: HIT isocenter is at 0.289 g/cm2 depth!")
+}
+
 ################################
 # E. Write out spectra, do plots
-if(output.spectra){
+if(output.spectra & (rbe.method == "SPCs and RBE file")){
   # Generate vector with depth positions
   spectra.depths.g.cm2 <- seq(0, max.depth.g.cm2*2, by = spectra.step.size.g.cm2)
   

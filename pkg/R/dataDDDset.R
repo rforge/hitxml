@@ -110,6 +110,7 @@ get.RBE.from.set <- function(DDD.set, depths.g.cm2, weights){
     weights <- rep(1.0, n.ddd)
   }
   
+  # Get doses, alphas and betas for all weights (rows) and depths (cols)
   doses     <- matrix( unlist( mclapply( 1:n.ddd, 
                                          function(i, x, y){ get.dose.Gy( get.ddd( x, 
                                                                                   x@beam.energies.MeV.u[i]), 
@@ -142,22 +143,33 @@ get.RBE.from.set <- function(DDD.set, depths.g.cm2, weights){
                       nrow  = n.ddd,
                       byrow = TRUE)
   
-  weighted.doses <- weights * doses
-  total.doses <- apply(weights * doses, 2, sum)
+  
+  # Get total doses for all depths and relative dose contributions for all weights (rows) and depths (cols)
+  weighted.doses     <- weights * doses
+  total.doses        <- apply(weights * doses, 2, sum)
+  rel.weighted.doses <- t(t(weighted.doses) / total.doses)
+  
+  # Sanity check: sum over weights (i.e. has to be 1.0)
+  # apply(rel.weighted.doses, 2, sum) - 1.0
+  
+  # Use Keller&Rossi additivity rule to get mixed field alpha and beta for all depths
+  weighted.alphas    <- rel.weighted.doses * alphas
+  weighted.betas     <- (rel.weighted.doses * sqrt(betas))^2
+  total.ion.alphas   <- apply(weighted.alphas, 2, sum)
+  total.ion.betas    <- apply(weighted.betas, 2, sum)
+  
+  # Get log survival fractions for ions
+  logSFs.ion <- total.doses * total.ion.alphas + total.doses^2 * total.ion.betas
+  
+  # Get full survival curve for X-rays
+  Xray.dose.Gy       <- seq(0, 30, length.out = 3000)
+  logSF.Xray         <- Xray.dose.Gy * DDD.set@alpha.X.Gy + Xray.dose.Gy^2 * DDD.set@beta.X.Gy2
 
-  rel.weighted.doses <- weighted.doses / total.doses
-  weighted.alphas <- rel.weighted.doses * alphas
-  weighted.betas <- (rel.weighted.doses * sqrt(betas))^2
-  
-  total.alphas <- apply(weighted.alphas, 2, sum)
-  total.betas <- apply(weighted.betas, 2, sum)
-  
-  SF.X <- total.doses * DDD.set@alpha.X.Gy + total.doses^2 * DDD.set@beta.X.Gy2
-  SF.ion <- total.doses * total.alphas + total.doses^2 * total.betas
-  apply(rel.weighted.doses, 2, sum)
-  
-    weighted.alphas <- 
-  return()
+  # Find iso-effective X-ray doses
+  Xray.iso.doses.Gy  <- approx(x = logSF.Xray, y = Xray.dose.Gy, xout = logSFs.ion)$y
+    
+  # Get RBE and return
+  return(Xray.iso.doses.Gy / total.doses)
 }
 
 setMethod(f          = "[", 
