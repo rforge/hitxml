@@ -20,7 +20,7 @@ library(grid)
 #===============#
 # USER INPUT ####
 #===============#
-expid                   <- "sg86106"
+expid                   <- "sg86110"
 # path to spc and ddd data
 base.path <- file.path("D:/00 - Einstellungen/E0409-NB7/",
                        "Dropbox/Beruf/Workspace/TRS398_SPR_revision/03 - Data/TRS398_C12_basedata_generic/generic")
@@ -31,7 +31,7 @@ ddd.path <- file.path(base.path,
 #spc.path <- "D:/04 - Risoe, DKFZ/03 - Methodik/11-20/20 - TRiP/04 - TRiP Basic Data/HIT/03 - TRiP98DATA_HIT-20131120/SPC/12C/RF3MM/"
 
 # minimal and maximal depth in cm
-min.depth.g.cm2         <- 10.0
+min.depth.g.cm2         <- 6.0
 max.depth.g.cm2         <- 16.0
 extend.IES              <- c(1,1)   # Number of additional IESs proximal and distal to SOBP (can yield more smooth plateau) 
 
@@ -51,8 +51,8 @@ rbe.method              <- c("SPCs and RBE file", "From alpha/beta with depth")[
 rbe.path                <- file.path(base.path,
                                      "DDD_alpha_beta/12C/RF3MM_3mmSteps_enSpread")
 rbe.file                <- "chordom02.rbe"
-n.biol.opt.steps        <- 5
-bio.step.size.g.cm2     <- 0.25
+n.biol.opt.steps        <- 10
+bio.step.size.g.cm2     <- 0.02
 
 # Output spectra?
 output.spectra          <- FALSE     
@@ -60,7 +60,7 @@ spectra.step.size.g.cm2 <- 0.125    # Distance between depth positions at which 
 
 # Misc
 plot.range              <- 2.0      # Plot depth up to ... time Bragg peak position 
-
+conversion.threshold    <- 1e-9     # Criterion of conversion for cost function (<1e-7)
 
 
 #==========================#
@@ -102,7 +102,9 @@ dose.dev <- function(p, depths.g.cm2, DDD.set, dose.set.Gy){
                                 depths.g.cm2 = depths.g.cm2, 
                                 weights      = p)
 
-  return(log10(sum((doses - dose.set.Gy)^2)))
+  # Get normalized deviation
+  dev <- (doses - dose.set.Gy)/dose.set.Gy
+  return(sum(dev^2))
 }
 
 # minimize objective function to find weights
@@ -116,10 +118,9 @@ if(.Platform$OS.type == "unix") {
                                       method         = "L-BFGS-B",
                                       lower          = rep(0.1, no.IES),
                                       upper          = rep(20, no.IES),
-                                      control        = list(trace = TRUE, 
+                                      control        = list(trace = 1, 
                                                             maxit = 300,
-                                                            factr = 1e9,
-                                                            reltol = 1e-5),
+                                                            factr = conversion.threshold/.Machine$double.eps),
                                       parallel       = list(cl = cl, forward = FALSE, loginfo = FALSE))$par
   stopCluster(cl)
 } else {
@@ -131,10 +132,11 @@ if(.Platform$OS.type == "unix") {
                                       method         = "L-BFGS-B",
                                       lower          = rep(0.1, no.IES),
                                       upper          = rep(20, no.IES),
-                                      control        = list(trace = TRUE, 
+                                      control        = list(trace = 1, 
                                                             maxit = 300,
-                                                            factr = 1e9,
-                                                            reltol = 1e-5))$par
+                                                            factr = conversion.threshold/.Machine$double.eps))$par
+  
+  
 }
 # Scale number of primaries to get actual weights
 fluence.factor <- plateau.dose.Gy / plateau.dose.per.primary.Gy
@@ -249,9 +251,9 @@ if(biol.optimization & (rbe.method == "SPCs and RBE file")){
                                 dose.set.Gy    = rbe.scaled.plateau.doses.per.primary.Gy,
                                 method         = "L-BFGS-B",
                                 lower          = rep(0.0, no.IES),
-                                control        = list(trace = TRUE, 
-                                                      maxit = 200,
-                                                      reltol = 1e-3))$par
+                                control        = list(trace = 1, 
+                                                      maxit = 300,
+                                                      factr = conversion.threshold/.Machine$double.eps))$par
     # Scale number of primaries to get actual weights
     fluence.factor <- plateau.dose.Gy / mean(plateau.dose.per.primary.Gy)
     total.weights  <- rel.weights * fluence.factor
@@ -345,7 +347,8 @@ if(biol.optimization & (rbe.method == "From alpha/beta with depth")){
                                   method         = "L-BFGS-B",
                                   lower          = rep(0.0, no.IES),
                                   control        = list(trace = 1, 
-                                                        maxit = 200))$par
+                                                        maxit = 300,
+                                                        factr = conversion.threshold/.Machine$double.eps))$par
     # Scale number of primaries to get actual weights
     total.weights  <- rel.weights * fluence.factor
     

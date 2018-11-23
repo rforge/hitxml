@@ -19,7 +19,7 @@ particle.name      <- "12C"
 #                         paste0("sg834", sprintf("%02d", seq(2, 12, by = 2))),
 #                         paste0("sg836", sprintf("%02d", seq(2, 6, by = 2))))
 
-expids              <- paste0("sg866", sprintf("%02d", seq(2, 4, by = 2)))
+expids              <- paste0("sg861", sprintf("%02d", seq(2, 8, by = 2)))
 
 fluence.scaling.factor <- 1 # Use if you want to change the fluence in a biologically optimized plan (as changing the
                               # biological dose will not scale the phys. dose / fluence linearily)
